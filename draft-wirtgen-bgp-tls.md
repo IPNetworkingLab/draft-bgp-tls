@@ -10,7 +10,7 @@ date:
 consensus: true
 v: 3
 area: "Routing"
-workgroup: "IDR"
+workgroup: "Border Gateway Protocol"
 keyword:
  - tcp
  - tls
@@ -18,11 +18,11 @@ keyword:
  - tcp-ao
 
 venue:
-  group: "IDR"
+  group: "Border Gateway Protocol"
   type: "Working Group"
-  mail: "idr@ietf.org"
-  arch: "https://mailarchive.ietf.org/arch/browse/idr/"
-  github: "obonaventure/draft-bgp-tls"
+  mail: "bgp@ans.net"
+  arch: "ftp.ans.net:/pub/archive/iwg"
+  github: "IPNetworkingLab/draft-bgp-tls"
 
 author:
  -
