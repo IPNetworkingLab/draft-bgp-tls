@@ -5,7 +5,7 @@ docname: draft-wirtgen-bgp-tls-latest
 category: exp
 
 submissiontype: IETF  # also: "independent", "editorial", "IAB", or "IRTF"
-number:
+number: 03
 date:
 consensus: true
 v: 3
@@ -22,12 +22,12 @@ venue:
   type: "Working Group"
   mail: "idr@ietf.org"
   arch: "https://mailarchive.ietf.org/arch/browse/idr/"
-  github: "obonaventure/draft-bgp-tls"
+  github: "IPNetworkingLab/draft-bgp-tls"
 
 author:
  -
     name: Thomas Wirtgen
-    organization: UCLouvain & WELRI
+    organization: UCLouvain 
     email: thomas.wirtgen@uclouvain.be
  -
     name: Olivier Bonaventure
@@ -64,9 +64,24 @@ informative:
   RFC5082:
   RFC8446:
   RFC9000:
-
-
-
+  BGPOST: DOI.10.1145/3696406
+  SURVEY:  http://hdl.handle.net/2078.1/292356
+    title: Survey on the Configuration of BGP routers
+    author:
+      -
+        ins: T. Wirtgen
+        name: Thomas Wirtgen
+    date: 2024
+    seriesinfo: Technical report, http://hdl.handle.net/2078.1/292356
+  IPCERT: 
+    title: We've Issued Our First IP Address Certificate
+    author:
+      -
+         ins: A. Gable
+         name: Aaron Gable
+    date: 2025     
+    seriesinfo: Blog https://letsencrypt.org/2025/07/01/issuing-our-first-ip-address-certificate/
+    
 --- abstract
 
 This document specifies the utilization of TCP/TLS to support BGP.
@@ -75,10 +90,9 @@ This document specifies the utilization of TCP/TLS to support BGP.
 
 # Introduction
 
-
 The Border Gateway Protocol (BGP) {{RFC4271}} relies on the TCP protocol
-to establish BGP sessions between routers. A recent draft
-{{I-D.draft-retana-idr-bgp-quic}} has proposed to replace TCP with
+to establish BGP sessions between routers. There are ongoing discussions
+within the IETF {{I-D.draft-retana-idr-bgp-quic}} to replace TCP with 
 the QUIC protocol {{RFC9000}}. QUIC brings many features compared to
 TCP including security, the support of multiple streams or datagrams.
 
@@ -86,21 +100,25 @@ From a security viewpoint, an important benefit of QUIC compared to TCP is
 that QUIC by design prevents injection attacks that are possible when
 TCP is used by BGP {{RFC4272}}. Several techniques can be used by BGP routers
 to counter this attacks {{RFC5082}} {{RFC5925}}. TCP-AO {{RFC5925}}
-authenticates the packets exchanged over a BGP session provides similar
-features as QUIC. However, it is notoriously difficult to configure the
-keys used to protect BGP sessions.
+authenticates the packets exchanged over a BGP session and provides similar
+features as QUIC. However, it a recent survey {{SURVEY}} indicates that it remains
+less used than TCP over MD5 {{RFC2385}}. 
 
 The widespread deployment of TLS {{RFC8446}} combined with the possibility of
 deriving TCP-AO keys from the TLS handshake {{I-D.draft-piraux-tcp-ao-tls}}
-creates an interest in using TLS to secure BGP sessions. This document
-describes how BGP can operate over TCP/TLS.
+creates an interest in using TLS to secure BGP sessions. While TLS is mainly
+used to interact with servers that have a certificate bound to a domain name,
+it is also possible to use TLS certificates bound to IP addresses {{IPCERT}}. 
+Such certificates are very useful to use BGP over TLS/TCP.
 
+This document
+describes how BGP can operate over TCP/TLS. Experience in implementing BGP
+over TLS/TCP {{BGPOST}} shows that this is less costly than porting a BGP implementation
+over QUIC.
 
 # Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
-
-
 
 This document uses network byte order (that is, big endian) values.
 Fields are placed starting from the high-order bits of each byte.
@@ -123,19 +141,17 @@ Once the TLS handshake is established and finished, the BGP session is
 initiated as defined in {{RFC4271}} and the protocol operates in the
 same way as a classic BGP over TCP session. The difference is that the
 BGP session is now encrypted and authenticated using the TLS layer.
-As in {{I-D.draft-retana-idr-bgp-quic}}, the TLS authentication parameters used for this connection
-are out of the scope of this draft.
-
+As in {{I-D.draft-retana-idr-bgp-quic}}, the TLS authentication 
+parameters used for this connection are out of the scope of this draft.
 
 # Security Considerations
 
-This document improves the security of BGP sessions since the information exchanged over the
-session is now protected by using TLS.
+This document improves the security of BGP sessions since the information 
+exchanged over the session is now protected by using TLS.
 
 If TLS encounters a payload injection attack, it will generate an alert that immediately
 closes the TLS session. The BGP router SHOULD then attempt to reestablish the session.
 However, this will cause traffic to be interrupted during the connection re-establishement.
-
 
 If both BGP peer supports TCP-AO, the TLS stack is protected against payload injection and
 this attack can be avoided. When enabled, TCP-AO counters TCP injection
@@ -144,11 +160,10 @@ attacks listed in {{RFC5082}}.
 Furthermore, if the BGP router supports TCP-AO, we recommend an opportunistic
 TCP-AO approach as suggested in {{I-D.draft-piraux-tcp-ao-tls}}. The
 router will attempt to connect using TCP-AO with a default key. When the TLS
-handshake is finished, the routers will derive a new TCP-AO key using the TLS key.
+handshake is finished, the routers will securely derive a new TCP-AO key from the TLS key.
 
 TCP-MD5 {{RFC2385}} MAY be used to protect the TLS session if TCP-AO is not available on the
 BGP router.
-
 
 # IANA Considerations
 
@@ -165,15 +180,15 @@ Protocol Port Number Registry" as follows:
 - Reference: this document
 - Unauthorized Use Reported: idr@ietf.org
 
-
 It is suggested to use the same port as the one selected for BGP over QUIC
 {{I-D.draft-retana-idr-bgp-quic}}.
 
 # Acknowledgments
 {:numbered="false"}
 
-The authors thank
-Dimitri Safonov for the TCP-AO implementation in Linux.
+The authors thank Dimitri Safonov for the TCP-AO implementation in Linux.
+This work has been partially supported by the Walloon Region as part of the 
+funding of the FRFS-WEL-T strategic axis.
 
 # Change log
 {:numbered="false"}
