@@ -1,15 +1,9 @@
 <!-- regenerate: on (set to off if you edit this file) -->
 
-# YOURNAME Drafts
+# BGP over TLS/TCP draft
 
 This is the working area for individual Internet-Drafts.
 
-## TODO - Your title
-
-* [Editor's Copy](https://IPNetworkingLab.github.io/draft-bgp-tls/#go.draft-todo-yourname-protocol.html)
-* [Datatracker Page](https://datatracker.ietf.org/doc/draft-todo-yourname-protocol)
-* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-todo-yourname-protocol)
-* [Compare Editor's Copy to Individual Draft](https://IPNetworkingLab.github.io/draft-bgp-tls/#go.draft-todo-yourname-protocol.diff)
 
 ## BGP over TLS/TCP
 
