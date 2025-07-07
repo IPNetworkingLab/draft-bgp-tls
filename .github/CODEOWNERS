@@ -1,0 +1,4 @@
+# Automatically generated CODEOWNERS
+# Regenerate with `make update-codeowners`
+draft-todo-yourname-protocol.md bonaventure@acm.org
+draft-wirtgen-bgp-tls.md thomas.wirtgen@uclouvain.be olivier.bonaventure@uclouvain.be
