@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-06-30T02:39:15.691530+00:00",
+  "timestamp": "2026-07-02T02:35:02.595364+00:00",
   "repo": "IPNetworkingLab/draft-bgp-tls",
   "labels": [
     {
@@ -50,5 +50,291 @@
     }
   ],
   "issues": [],
-  "pulls": []
+  "pulls": [
+    {
+      "number": 1,
+      "id": "PR_kwDOPIXBD87skXor",
+      "title": "Update draft to revision 05",
+      "url": "https://github.com/IPNetworkingLab/draft-bgp-tls/pull/1",
+      "state": "OPEN",
+      "author": "AravindBabuM",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Update draft to revision 05.\r\nAdd Transport, Session Management, Operational sections; \r\nmandate TCP-AO; switch to Implicit TLS on port 179.",
+      "createdAt": "2026-07-01T07:45:39Z",
+      "updatedAt": "2026-07-01T15:44:33Z",
+      "baseRepository": "IPNetworkingLab/draft-bgp-tls",
+      "baseRefName": "main",
+      "baseRefOid": "de29e6103224e6a9b32e6530faa0342c6a7c2152",
+      "headRepository": "AravindBabuM/draft-bgp-tls",
+      "headRefName": "main",
+      "headRefOid": "29530724e8ba4feb6ecf3397002ac4aa2332e0a0",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEpykDw",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "obonaventure",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "This is a partial review, next comments tomorrow.",
+          "createdAt": "2026-07-01T08:42:31Z",
+          "updatedAt": "2026-07-01T08:52:52Z",
+          "comments": [
+            {
+              "originalPosition": 6,
+              "body": "keep latest, script will update the version number",
+              "createdAt": "2026-07-01T08:42:32Z",
+              "updatedAt": "2026-07-01T08:52:52Z"
+            },
+            {
+              "originalPosition": 19,
+              "body": "Thomas is not WELRI and not anymore UCLouvain",
+              "createdAt": "2026-07-01T08:43:11Z",
+              "updatedAt": "2026-07-01T08:52:52Z"
+            },
+            {
+              "originalPosition": 103,
+              "body": "I would remove pre-shared key authentication from the abstract to keep draft-piraux possible",
+              "createdAt": "2026-07-01T08:44:15Z",
+              "updatedAt": "2026-07-01T08:52:52Z"
+            },
+            {
+              "originalPosition": 151,
+              "body": "I would remove \"with a pre-shared key\". Is  MAY the right word, shouldn't is be SHOULD ?",
+              "createdAt": "2026-07-01T08:45:42Z",
+              "updatedAt": "2026-07-01T08:52:52Z"
+            },
+            {
+              "originalPosition": 157,
+              "body": "We could already mention client certificates or MTLS in the introduction\n",
+              "createdAt": "2026-07-01T08:46:17Z",
+              "updatedAt": "2026-07-01T08:52:52Z"
+            },
+            {
+              "originalPosition": 158,
+              "body": "replace TCP-AO -> complements TCP-AO. TCP-AO protects the TCP header, while TLS protects the TCP payload and thus the BGP messages.",
+              "createdAt": "2026-07-01T08:47:32Z",
+              "updatedAt": "2026-07-01T08:52:52Z"
+            },
+            {
+              "originalPosition": 162,
+              "body": "Earlier you wrote MAY. We need to clearly define the words that we use",
+              "createdAt": "2026-07-01T08:48:03Z",
+              "updatedAt": "2026-07-01T08:52:52Z"
+            },
+            {
+              "originalPosition": 164,
+              "body": "I would mention suggest. Maybe we can have two variants:\n- BOTLS with TCP-AO and preshared keys\n- BOTLS with TCP-AO and draft-piraux",
+              "createdAt": "2026-07-01T08:48:49Z",
+              "updatedAt": "2026-07-01T08:52:52Z"
+            },
+            {
+              "originalPosition": 187,
+              "body": "A TCP connection is established on port 179. The integrity of the TCP segments is protected by using TCP-AO.",
+              "createdAt": "2026-07-01T08:49:40Z",
+              "updatedAt": "2026-07-01T08:52:52Z"
+            },
+            {
+              "originalPosition": 200,
+              "body": "A TLS session is established over THIS TCP connection.",
+              "createdAt": "2026-07-01T08:49:58Z",
+              "updatedAt": "2026-07-01T08:52:52Z"
+            },
+            {
+              "originalPosition": 211,
+              "body": "TCP-AO protects the integrity of the TCP header",
+              "createdAt": "2026-07-01T08:50:31Z",
+              "updatedAt": "2026-07-01T08:52:53Z"
+            },
+            {
+              "originalPosition": 213,
+              "body": "I would remove New",
+              "createdAt": "2026-07-01T08:50:40Z",
+              "updatedAt": "2026-07-01T08:52:53Z"
+            },
+            {
+              "originalPosition": 215,
+              "body": "We need to mention that TCP-AO is used. It becomes mandatory in this draft.",
+              "createdAt": "2026-07-01T08:51:21Z",
+              "updatedAt": "2026-07-01T08:52:53Z"
+            },
+            {
+              "originalPosition": 225,
+              "body": "We probably need to have a section on certificates and point to this draft for this discussion.",
+              "createdAt": "2026-07-01T08:51:46Z",
+              "updatedAt": "2026-07-01T08:52:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEqK3Vw",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "sekrier",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-01T09:33:48Z",
+          "updatedAt": "2026-07-01T09:33:48Z",
+          "comments": [
+            {
+              "originalPosition": 19,
+              "body": "@thomas.wirtgen@gmail.com : Aerospacelab (as per linkendin) or other ?",
+              "createdAt": "2026-07-01T09:33:48Z",
+              "updatedAt": "2026-07-01T09:33:49Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEqYtXg",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "sekrier",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-01T10:03:29Z",
+          "updatedAt": "2026-07-01T10:03:29Z",
+          "comments": [
+            {
+              "originalPosition": 62,
+              "body": "RFC3207 is listed as a normative reference but never cited in the body",
+              "createdAt": "2026-07-01T10:03:29Z",
+              "updatedAt": "2026-07-01T10:03:29Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEqawQQ",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "sekrier",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-01T10:08:17Z",
+          "updatedAt": "2026-07-01T10:08:17Z",
+          "comments": [
+            {
+              "originalPosition": 145,
+              "body": "```suggestion\nto counter such attacks {{RFC5082}} and {{RFC5925}}.\n```",
+              "createdAt": "2026-07-01T10:08:17Z",
+              "updatedAt": "2026-07-01T10:08:17Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEqcvUw",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "sekrier",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-01T10:12:59Z",
+          "updatedAt": "2026-07-01T10:12:59Z",
+          "comments": [
+            {
+              "originalPosition": 538,
+              "body": "```suggestion\nThe authors thank Dmitry Safonov for the TCP-AO implementation in Linux.\n```",
+              "createdAt": "2026-07-01T10:12:59Z",
+              "updatedAt": "2026-07-01T10:13:35Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEqd6Jg",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "sekrier",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-01T10:16:05Z",
+          "updatedAt": "2026-07-01T10:16:06Z",
+          "comments": [
+            {
+              "originalPosition": 546,
+              "body": "Contributors are usually just listed\n\n```suggestion\n   Serge Krier (editor)\n   Cisco Systems\n   De Kleetlaan 6a\n   1831 Diegem\n   Belgium\n   Email: sekrier@cisco.com\n```",
+              "createdAt": "2026-07-01T10:16:05Z",
+              "updatedAt": "2026-07-01T10:16:06Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEscmRw",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "sekrier",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-01T14:29:56Z",
+          "updatedAt": "2026-07-01T14:29:56Z",
+          "comments": [
+            {
+              "originalPosition": 263,
+              "body": "suggestion\n\n```\n~~~\n-Peer A (active)                      Peer B (passive, listening :179)\n+Peer A (active = TLS client)         Peer B (passive = TLS server, :179)\n   |--- TCP SYN + AO(MAC) (port 179) ------>|\n   |<-- TCP SYN-ACK + AO(MAC) --------------|\n   |--- TCP ACK + AO(MAC) ----------------->|\n-  |                                        |  <- TCP up, no BGP yet\n-  |--- TLS ClientHello ------------------->|  <- Immediately TLS 1.3\n-  |<-- TLS ServerHello+ServerCert+CertReq -|  <- Mutual TLS\n-  |--- TLS Certificate (client cert) ----->|\n-  |<------ TLS Exchanges ----------------->|\n-  |<-- TLS Finished --------------------->|\n-  |                                        |  <- Encrypted channel up\n+  |                                        |  <- TCP up (TCP-AO), no BGP yet\n+  |--- TLS ClientHello ------------------->|  <- TLS 1.3 begins\n+  |<-- ServerHello, {EncryptedExtensions}, |\n+  |    {CertificateRequest}, {Certificate},|\n+  |    {CertificateVerify}, {Finished} ----|  <- server's whole flight;\n+  |                                        |     server is already \"done\"\n+  |--- {Certificate}, {CertificateVerify}, |\n+  |    {Finished} ------------------------>|  <- client authenticates and\n+  |                                        |     sends the LAST Finished\n+  |                                        |  <- Encrypted, mutually-\n+  |                                        |     authenticated channel up\n   |--- BGP OPEN (inside TLS) ------------->|  <- BGP exchanges start here\n   |<-- BGP OPEN (inside TLS) --------------|\n   |--- BGP KEEPALIVE --------------------->|\n```",
+              "createdAt": "2026-07-01T14:29:56Z",
+              "updatedAt": "2026-07-01T14:29:56Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEtEQSg",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "sekrier",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-01T15:44:09Z",
+          "updatedAt": "2026-07-01T15:44:10Z",
+          "comments": [
+            {
+              "originalPosition": 342,
+              "body": "```suggestion\n+      list length: 00 06\n+      name length: 05\n+      \"botls\":     62 6F 74 6C 73\n```",
+              "createdAt": "2026-07-01T15:44:09Z",
+              "updatedAt": "2026-07-01T15:44:10Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEtEc1w",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "sekrier",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-01T15:44:32Z",
+          "updatedAt": "2026-07-01T15:44:33Z",
+          "comments": [
+            {
+              "originalPosition": 353,
+              "body": "```suggestion\n-    \"botls\": 62 6F 74 6C 73\n+    list length: 00 06\n+    name length: 05\n+    \"botls\":     62 6F 74 6C 73\n```",
+              "createdAt": "2026-07-01T15:44:32Z",
+              "updatedAt": "2026-07-01T15:44:33Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
