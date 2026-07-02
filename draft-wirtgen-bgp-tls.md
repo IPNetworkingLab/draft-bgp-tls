@@ -1,7 +1,7 @@
 ---
 title: "BGP over TLS/TCP"
 abbrev: bgp-tls
-docname: draft-wirtgen-bgp-tls-05
+docname: draft-wirtgen-bgp-tls-latest
 category: std
 
 submissiontype: IETF  # also: "independent", "editorial", "IAB", or "IRTF"
@@ -26,8 +26,8 @@ venue:
 author:
  -
     name: Thomas Wirtgen
-    organization: UCLouvain & WELRI 
-    email: thomas.wirtgen@uclouvain.be
+    organization: Aerospacelab 
+    email: thomas.wirtgen@gmail.com
  -
     name: Olivier Bonaventure
     organization: UCLouvain & WELRI
@@ -48,7 +48,6 @@ normative:
   RFC5925:
   RFC7301:
   RFC8446:
-  RFC3207:
   I-D.piraux-tcp-ao-tls:
   I-D.hbq-bgp-tls-auth:
 
@@ -67,9 +66,9 @@ transport-layer integrity protection against spoofing and reset attacks,
 it does not provide confidentiality, cryptographic peer identity, or
 scalable key management. This document specifies a method for
 establishing a secure BGP session by running BGP over a TLS 1.3
-session. The underlying TCP transport MUST be protected using TCP-AO
-with pre-shared key authentication. An "Implicit TLS" model on TCP
-port 179 is specified as the preferred mechanism.
+session. The underlying TCP transport MUST be protected using TCP-AO. 
+An "Implicit TLS" model on TCP port 179 is specified as the preferred 
+mechanism.
 
 --- middle
 
@@ -85,14 +84,13 @@ transport.
 From a security viewpoint, an important benefit of QUIC compared to TCP
 is that QUIC, by design, prevents the injection attacks that are
 possible when TCP is used by BGP {{RFC4272}}. Several techniques exist
-to counter such attacks {{RFC5082}} {{RFC5925}}.
+to counter such attacks {{RFC5082}} and {{RFC5925}}.
 
 TCP-AO {{RFC5925}} authenticates the packets exchanged over a BGP
 session and enhances transport-layer integrity by protecting TCP
 segments against spoofing and reset attacks. However, TCP-AO does not
 provide encryption, cryptographic identity, or scalable key management.
-TCP-AO with a pre-shared key MAY be used to protect BGP transport
-traffic.
+TCP-AO SHOULD be used to protect BGP transport traffic.
 
 TLS {{RFC8446}} introduces authenticated peer identities,
 confidentiality of routing messages, and cryptographic agility aligned
@@ -167,17 +165,21 @@ exchanges conducted over the encrypted channel. No plaintext BGP bytes
 appear on the wire, and the use of TLS is assumed by configuration.
 
 ~~~
-Peer A (active)                      Peer B (passive, listening :179)
+Peer A (active = TLS client)         Peer B (passive = TLS server, :179)
   |--- TCP SYN + AO(MAC) (port 179) ------>|
   |<-- TCP SYN-ACK + AO(MAC) --------------|
   |--- TCP ACK + AO(MAC) ----------------->|
-  |                                        |  <- TCP up, no BGP yet
-  |--- TLS ClientHello ------------------->|  <- Immediately TLS 1.3
-  |<-- TLS ServerHello+ServerCert+CertReq -|  <- Mutual TLS
-  |--- TLS Certificate (client cert) ----->|
-  |<------ TLS Exchanges ----------------->|
-  |<-- TLS Finished --------------------->|
-  |                                        |  <- Encrypted channel up
+  |                                        |  <- TCP up (TCP-AO), no BGP yet
+  |--- TLS ClientHello ------------------->|  <- TLS 1.3 begins
+  |<-- ServerHello, {EncryptedExtensions}, |
+  |    {CertificateRequest}, {Certificate},|
+  |    {CertificateVerify}, {Finished} ----|  <- server's whole flight;
+  |                                        |     server is already "done"
+  |--- {Certificate}, {CertificateVerify}, |
+  |    {Finished} ------------------------>|  <- client authenticates and
+  |                                        |     sends the LAST Finished
+  |                                        |  <- Encrypted, mutually-
+  |                                        |     authenticated channel up
   |--- BGP OPEN (inside TLS) ------------->|  <- BGP exchanges start here
   |<-- BGP OPEN (inside TLS) --------------|
   |--- BGP KEEPALIVE --------------------->|
@@ -262,8 +264,9 @@ extension in its ClientHello:
 TLS ClientHello extensions:
   application_layer_protocol_negotiation (0x0010):
     ProtocolNameList:
-      length: 00 05
-      "botls": 62 6F 74 6C 73
+      list length: 00 06
+      name length: 05
+      "botls":     62 6F 74 6C 73
 ~~~
 {: #fig-alpn-clienthello title="ALPN Extension in ClientHello"}
 
@@ -273,7 +276,9 @@ EncryptedExtensions message:
 ~~~
 application_layer_protocol_negotiation (0x0010):
   ProtocolNameList:
-    "botls": 62 6F 74 6C 73
+    list length: 00 06
+    name length: 05
+    "botls":     62 6F 74 6C 73
 ~~~
 {: #fig-alpn-encrypted title="ALPN Extension in EncryptedExtensions"}
 
@@ -429,13 +434,17 @@ Reference               : This document
 # Acknowledgments
 {:numbered="false"}
 
-The authors thank Dimitri Safonov for the TCP-AO implementation in Linux.
+The authors thank Dmitry Safonov for the TCP-AO implementation in Linux.
 
 # Contributors
 {:numbered="false"}
 
-The authors would like to thank Serge Krier for his contributions and
-reviews of this document.
+   Serge Krier
+   Cisco Systems
+   De Kleetlaan 6a
+   1831 Diegem
+   Belgium
+   Email: sekrier@cisco.com
 
 # Change log
 {:numbered="false"}
