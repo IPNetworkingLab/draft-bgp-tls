@@ -95,15 +95,17 @@ TCP-AO SHOULD be used to protect BGP transport traffic.
 TLS {{RFC8446}} introduces authenticated peer identities,
 confidentiality of routing messages, and cryptographic agility aligned
 with modern compliance requirements. The widespread deployment of TLS
-creates an interest in using TLS to secure BGP sessions. TLS does not
-replace TCP-AO; rather, TCP-AO protects the transport layer, while TLS
-secures the BGP protocol session itself.
+creates an interest in using Mutual TLS (mTLS) to secure BGP sessions. 
+TLS complements TCP-AO: TCP-AO authenticates the entire TCP segment, 
+covering both the TCP header and payload, to provide integrity and 
+peer authentication at the transport layer. mTLS additionally encrypts 
+and authenticates the application data (the TCP payload), and
+authenticates both BGP endpoints.
 
 This document describes how to establish a secure BGP session using
-TLS. The underlying TCP transport MUST be protected using TCP-AO
-{{RFC5925}} with pre-shared key authentication. This document also
-explores the possibility of deriving TCP-AO keys from the TLS handshake
-{{I-D.piraux-tcp-ao-tls}}.
+mTLS. The underlying TCP transport MUST be protected using TCP-AO
+{{RFC5925}} with pre-shared key authentication or deriving TCP-AO 
+keys from the TLS handshake as described in {{I-D.piraux-tcp-ao-tls}}.
 
 # Conventions and Definitions
 
@@ -116,9 +118,10 @@ placed starting from the high-order bits of each byte.
 
 A BGP over TLS/TCP-AO session is established in two phases:
 
-1. A transport-layer connection is established using TCP-AO.
+1. A TCP connection is established on port 179. The integrity of the 
+TCP segments is protected by using TCP-AO.
 
-2. A TLS session is established over the TCP connection.
+2. A TLS session is established over THIS TCP connection.
 
 With mandatory TCP-AO as the underlying transport protection, TCP port
 179 continues to provide authenticated transport establishment. This
@@ -129,9 +132,9 @@ The key benefits of this approach are as follows:
 
 * The existing BGP TCP port 179 transport is reused.
 
-* TCP-AO is used as the bootstrap trust layer.
+* TCP-AO protects the integrity of the TCP segment.
 
-* New firewall, ACL, and operational deployment changes are avoided.
+* Firewall, ACL, and operational deployment changes are avoided.
 
 During the establishment of the TLS session, the router that initiates
 the connection MUST use the "botls" token in the Application-Layer
