@@ -3,9 +3,13 @@
 
 
 IDR                                                           T. Wirtgen
-Internet-Draft                                            O. Bonaventure
-Intended status: Experimental                          UCLouvain & WELRI
-Expires: 8 January 2026                                      7 July 2025
+Internet-Draft                                              Unaffiliated
+Intended status: Standards Track                          O. Bonaventure
+Expires: 4 January 2027                                UCLouvain & WELRI
+                                                         A. MahendraBabu
+                                                            C. R. Gaddam
+                                                           Cisco Systems
+                                                             3 July 2026
 
 
                             BGP over TLS/TCP
@@ -13,7 +17,16 @@ Expires: 8 January 2026                                      7 July 2025
 
 Abstract
 
-   This document specifies the utilization of TCP/TLS to support BGP.
+   This document specifies the use of TLS over TCP to support BGP.  The
+   Border Gateway Protocol (BGP) relies on TCP to establish sessions
+   between routers.  While the TCP Authentication Option (TCP-AO)
+   provides transport-layer integrity protection against spoofing and
+   reset attacks, it does not provide confidentiality, cryptographic
+   peer identity, or scalable key management.  This document specifies a
+   method for establishing a secure BGP session by running BGP over a
+   TLS 1.3 session.  The underlying TCP transport MUST be protected
+   using TCP-AO.  An "Implicit TLS" model on TCP port 179 is specified
+   as the preferred mechanism.
 
 About This Document
 
@@ -28,7 +41,7 @@ About This Document
    https://www.ietf.org/mailman/listinfo/idr/.
 
    Source for this draft and an issue tracker can be found at
-   https://github.com/obonaventure/draft-bgp-tls.
+   https://github.com/IPNetworkingLab/draft-bgp-tls.
 
 Status of This Memo
 
@@ -45,11 +58,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 8 January 2026.
+   This Internet-Draft will expire on 4 January 2027.
 
 Copyright Notice
 
-   Copyright (c) 2025 IETF Trust and the persons identified as the
+   Copyright (c) 2026 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -65,10 +78,24 @@ Table of Contents
 
    1.  Introduction
    2.  Conventions and Definitions
-   3.  Summary of operation
-   4.  Security Considerations
-   5.  IANA Considerations
+   3.  Summary of Operation
+   4.  Transport
+     4.1.  Overview
+     4.2.  TLS Authentication for BGP
+     4.3.  Initiating the TLS Procedure
+     4.4.  Connection Establishment Failures
+       4.4.1.  TLS ClientHello received by a non-TLS peer
+       4.4.2.  TLS Handshake Timeout
+     4.5.  ALPN for BGP over TLS
+   5.  Connection and Session Management
+     5.1.  Connection Collision Detection
+     5.2.  TLS Session Continuity and Certificate Expiry Handling
+   6.  Operational Considerations
+   7.  Security Considerations
+   8.  IANA Considerations
+     8.1.  Registration of the BOTLS ALPN Identification String
    Acknowledgments
+   Contributors
    Change log
    References
      Normative References
@@ -77,26 +104,38 @@ Table of Contents
 
 1.  Introduction
 
-   The Border Gateway Protocol (BGP) [RFC4271] relies on the TCP
-   protocol to establish BGP sessions between routers.  A recent draft
-   [I-D.draft-retana-idr-bgp-quic] has proposed to replace TCP with the
-   QUIC protocol [RFC9000].  QUIC brings many features compared to TCP
-   including security, the support of multiple streams or datagrams.
+   The Border Gateway Protocol (BGP) [RFC4271] relies on TCP to
+   establish BGP sessions between routers.  A recent draft
+   [I-D.retana-idr-bgp-quic] has proposed replacing TCP with the QUIC
+   protocol [RFC9000].  QUIC provides several advantages over TCP,
+   including security, support for multiple streams, and datagram
+   transport.
 
    From a security viewpoint, an important benefit of QUIC compared to
-   TCP is that QUIC by design prevents injection attacks that are
-   possible when TCP is used by BGP [RFC4272].  Several techniques can
-   be used by BGP routers to counter this attacks [RFC5082] [RFC5925].
-   TCP-AO [RFC5925] authenticates the packets exchanged over a BGP
-   session provides similar features as QUIC.  However, it is
-   notoriously difficult to configure the keys used to protect BGP
-   sessions.
+   TCP is that QUIC, by design, prevents the injection attacks that are
+   possible when TCP is used by BGP [RFC4272].  Several techniques exist
+   to counter such attacks [RFC5082] and [RFC5925].
 
-   The widespread deployment of TLS [RFC8446] combined with the
-   possibility of deriving TCP-AO keys from the TLS handshake
-   [I-D.draft-piraux-tcp-ao-tls] creates an interest in using TLS to
-   secure BGP sessions.  This document describes how BGP can operate
-   over TCP/TLS.
+   TCP-AO [RFC5925] authenticates the packets exchanged over a BGP
+   session and enhances transport-layer integrity by protecting TCP
+   segments against spoofing and reset attacks.  However, TCP-AO does
+   not provide encryption, cryptographic identity, or scalable key
+   management.  TCP-AO SHOULD be used to protect BGP transport traffic.
+
+   TLS [RFC8446] introduces authenticated peer identities,
+   confidentiality of routing messages, and cryptographic agility
+   aligned with modern compliance requirements.  The widespread
+   deployment of TLS creates an interest in using Mutual TLS (mTLS) to
+   secure BGP sessions.  TLS complements TCP-AO: TCP-AO authenticates
+   the entire TCP segment, covering both the TCP header and payload, to
+   provide integrity and peer authentication at the transport layer.
+   mTLS additionally encrypts and authenticates the application data
+   (the TCP payload), and authenticates both BGP endpoints.
+
+   This document describes how to establish a secure BGP session using
+   mTLS.  The underlying TCP transport MUST be protected using TCP-AO
+   [RFC5925] with pre-shared key authentication or deriving TCP-AO keys
+   from the TLS handshake as described in [I-D.piraux-tcp-ao-tls].
 
 2.  Conventions and Definitions
 
@@ -106,86 +145,333 @@ Table of Contents
    BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
    capitals, as shown here.
 
-   This document uses network byte order (that is, big endian) values.
-   Fields are placed starting from the high-order bits of each byte.
+   This document uses network byte order (that is, big-endian).  Fields
+   are placed starting from the high-order bits of each byte.
 
-3.  Summary of operation
+3.  Summary of Operation
 
-   A BGP over TLS/TCP session is established in two phases:
+   A BGP over TLS/TCP-AO session is established in two phases:
 
-   *  establish a transport layer connection using TCP
+   1.  A TCP connection is established on port 179.  The integrity of
+       the TCP segments is protected by using TCP-AO.
 
-   *  establish a TLS session over the TCP connection
+   2.  A TLS session is established over this TCP connection.
 
-   The TCP connection SHOULD be established on port TBD1.
+   With mandatory TCP-AO as the underlying transport protection, TCP
+   port 179 continues to provide authenticated transport establishment.
+   This avoids the need for a new port while preserving the existing BGP
+   operational model.
+
+   The key benefits of this approach are as follows:
+
+   *  The existing BGP TCP port 179 transport is reused.
+
+   *  TCP-AO protects the integrity of the TCP segment.
+
+   *  Firewall, ACL, and operational deployment changes are avoided.
 
    During the establishment of the TLS session, the router that
    initiates the connection MUST use the "botls" token in the
-   Application Layer Protocol Negotiation (ALPN) extension [RFC7301].
-   The support for other ALPN MUST NOT be proposed during the TLS
-   handshake.
+   Application-Layer Protocol Negotiation (ALPN) extension [RFC7301].
+   Other ALPN tokens MUST NOT be included in the TLS handshake.
 
-   Once the TLS handshake is established and finished, the BGP session
-   is initiated as defined in [RFC4271] and the protocol operates in the
-   same way as a classic BGP over TCP session.  The difference is that
-   the BGP session is now encrypted and authenticated using the TLS
-   layer.  As in [I-D.draft-retana-idr-bgp-quic], the TLS authentication
-   parameters used for this connection are out of the scope of this
-   draft.
+   Once the TLS handshake is complete, the BGP session is initiated as
+   defined in [RFC4271], and the protocol operates in the same manner as
+   a classic BGP-over-TCP session, except that the session is encrypted
+   and authenticated by the TLS layer.
 
-4.  Security Considerations
+4.  Transport
 
-   This document improves the security of BGP sessions since the
-   information exchanged over the session is now protected by using TLS.
+4.1.  Overview
 
-   If TLS encounters a payload injection attack, it will generate an
-   alert that immediately closes the TLS session.  The BGP router SHOULD
-   then attempt to reestablish the session.  However, this will cause
-   traffic to be interrupted during the connection re-establishement.
+   This document specifies the use of TCP port 179 rather than a
+   dedicated port.  The use of a dedicated port is purely an operational
+   and deployment choice.
 
-   If both BGP peer supports TCP-AO, the TLS stack is protected against
-   payload injection and this attack can be avoided.  When enabled, TCP-
-   AO counters TCP injection attacks listed in [RFC5082].
+4.2.  TLS Authentication for BGP
 
-   Furthermore, if the BGP router supports TCP-AO, we recommend an
-   opportunistic TCP-AO approach as suggested in
-   [I-D.draft-piraux-tcp-ao-tls].  The router will attempt to connect
-   using TCP-AO with a default key.  When the TLS handshake is finished,
-   the routers will derive a new TCP-AO key using the TLS key.
+   [I-D.hbq-bgp-tls-auth] discusses authentication considerations for
+   running BGP over TLS protocols and defines a PKI framework to provide
+   for authenticating BGP peering sessions.
 
-   TCP-MD5 [RFC2385] MAY be used to protect the TLS session if TCP-AO is
-   not available on the BGP router.
+4.3.  Initiating the TLS Procedure
 
-5.  IANA Considerations
+   This document specifies the Implicit TLS model for BGP session
+   establishment.  Both peers MUST be pre-configured to enable TLS on
+   port 179.  After the TCP-AO connection is established, the active
+   peer (TLS client) MUST transmit a TLS ClientHello as its first
+   application-layer bytes; the passive peer (TLS server) MUST expect a
+   TLS ClientHello before sending any data.  BGP exchanges MUST NOT
+   commence until the TLS handshake has completed successfully.  No
+   plaintext BGP bytes appear on the wire; use of TLS is assumed
+   entirely by configuration.
 
-   IANA is requested to assign a TCP port (TBD1) from the "Service Name
-   and Transport Protocol Port Number Registry" as follows:
+Peer A (active = TLS client)         Peer B (passive = TLS server, :179)
+  |--- TCP SYN + AO(MAC) (port 179) ------>|
+  |<-- TCP SYN-ACK + AO(MAC) --------------|
+  |--- TCP ACK + AO(MAC) ----------------->|
+  |                                        |  <- TCP up (TCP-AO), no BGP yet
+  |--- TLS ClientHello ------------------->|  <- TLS 1.3 begins
+  |<-- ServerHello, {EncryptedExtensions}, |
+  |    {CertificateRequest}, {Certificate},|
+  |    {CertificateVerify}, {Finished} ----|  <- server's whole flight;
+  |                                        |     server is already "done"
+  |--- {Certificate}, {CertificateVerify}, |
+  |    {Finished} ------------------------>|  <- client authenticates and
+  |                                        |     sends the LAST Finished
+  |                                        |  <- Encrypted, mutually-
+  |                                        |     authenticated channel up
+  |--- BGP OPEN (inside TLS) ------------->|  <- BGP exchanges start here
+  |<-- BGP OPEN (inside TLS) --------------|
+  |--- BGP KEEPALIVE --------------------->|
+  |<-- BGP KEEPALIVE ----------------------|
+  |                                        |  <- ESTABLISHED
 
-   *  Service Name: botls
+           Figure 1: Implicit TLS Establishment on Port 179
 
-   *  Port Number: TBD1
+   This model is simple, requires no protocol changes to BGP, and incurs
+   no negotiation overhead.  In this model, both endpoints MUST be
+   explicitly configured for TLS.
 
-   *  Transport Protocol: TCP
+   Implementations MUST support TLS 1.3 [RFC8446] with mutual TLS
+   authentication.  The connection MUST NOT proceed for any lower TLS
+   version.
 
-   *  Description: BGP over TLS/TCP
+4.4.  Connection Establishment Failures
 
-   *  Assignee: IETF
+   An active BGP peer MUST connect over a TLS-protected TCP-AO
+   connection and never over plaintext TCP.  Any failure within the TLS
+   layer is abstracted from the BGP Finite State Machine (FSM), which
+   observes only a generic connection failure event.  TLS error alerts
+   are defined in Section 6.2 of [RFC8446].  The active BGP peer should
+   continue attempting the TLS establishment.  After the configured
+   number of failed attempts, it may proceed based on the local policy
+   decisions described in Operational Considerations (Section 6), using
+   TCP-AO authentication only.
 
-   *  Contact: IDR WG
+   TCP connected (TCP-AO authenticated)
+     -> TLS layer
+          -> TLS succeeded? -> BGP socket ready -> send OPEN
+          -> TLS failed?    -> TcpConnectionFails
+                               -> Local Policy decision
 
-   *  Registration Data: TBD
+           Figure 2: Abstraction of TLS Failures from the BGP FSM
 
-   *  Reference: this document
+4.4.1.  TLS ClientHello received by a non-TLS peer
 
-   *  Unauthorized Use Reported: idr@ietf.org
+   A non-TLS peer reads the TLS ClientHello (0x16 0x03 0x01 ...) as a
+   BGP message header.  As per Section 6.1 of [RFC4271], the 16-octet
+   Marker MUST be all 0xFF; because the record begins with 0x16, the
+   check fails immediately.  As per Section 4.5 of [RFC4271], the BGP
+   connection is closed immediately after the NOTIFICATION message is
+   sent.
 
-   It is suggested to use the same port as the one selected for BGP over
-   QUIC [I-D.draft-retana-idr-bgp-quic].
+Peer A (active = TLS client)          Peer B (plain BGP, non-TLS)
+  |-- TCP handshake ------------------->|  <- TCP up
+  |-- TLS ClientHello ----------------->|
+  |   Content Type: 16                  |  Marker byte 0x16 != 0xFF
+  |   Version:      03 01               |  -> Connection Not Synchronized
+  |<- BGP NOTIFICATION -----------------|
+  |<- TCP FIN --------------------------|
+
+     Figure 3: ClientHello Interpreted as a Malformed BGP Header
+
+   After receiving TcpConnectionFails (Event 18), Peer A SHOULD
+   terminate the connection and MAY initiate a new connection attempt
+   based on local policy.
+
+4.4.2.  TLS Handshake Timeout
+
+   If a non-TLS peer accepts the TCP connection but neither sends a BGP
+   NOTIFICATION message nor resets the connection after receiving a TLS
+   ClientHello, the TLS-capable peer that initiated the TLS handshake
+   may eventually experience a TLS connection timeout and transition,
+   via TcpConnectionFails (Event 18) or ConnectRetryTimer expiry, back
+   to the Idle state.
+
+4.5.  ALPN for BGP over TLS
+
+   Application-Layer Protocol Negotiation [RFC7301] allows a TLS client
+   to declare the application protocol it intends to use within the TLS
+   session.  For BGP over TLS, the ALPN identifier is the octet sequence
+   0x62 0x6F 0x74 0x6C 0x73 ("botls"), defined by this document and
+   registered as specified in Section 8.
+
+   An active BGP peer initiating the TLS exchange MUST include the
+   following extension in its ClientHello:
+
+   TLS ClientHello extensions:
+     application_layer_protocol_negotiation (0x0010):
+       ProtocolNameList:
+         list length: 00 06
+         name length: 05
+         "botls":     62 6F 74 6C 73
+
+                  Figure 4: ALPN Extension in ClientHello
+
+   The passive BGP peer MUST indicate the selected protocol in the
+   EncryptedExtensions message:
+
+   application_layer_protocol_negotiation (0x0010):
+     ProtocolNameList:
+       list length: 00 06
+       name length: 05
+       "botls":     62 6F 74 6C 73
+
+              Figure 5: ALPN Extension in EncryptedExtensions
+
+   If the responding BGP peer does not recognize "botls", it MUST send a
+   fatal TLS alert:
+
+   TLS Alert (fatal):
+     Level       : 02   (fatal)
+     Description : 78   (no_application_protocol = 120)
+
+           Figure 6: Fatal Alert on Unrecognized ALPN Identifier
+
+   ALPN provides an early, explicit signal that the remote endpoint is
+   not a BGP-over-TLS endpoint, which is preferable to completing the
+   handshake and failing later on a malformed OPEN message.
+
+5.  Connection and Session Management
+
+   Since BGP operates as a peer-to-peer protocol rather than a strict
+   client/server protocol, either peer MAY initiate the TCP connection.
+   The peer that sends the TLS ClientHello is designated the active peer
+   and acts as the TLS client; the peer that receives it is the passive
+   peer and acts as the TLS server.  Therefore, each BGP speaker
+   implementing TLS MUST be capable of operating in both roles.
+
+5.1.  Connection Collision Detection
+
+   When both peers simultaneously initiate a TCP connection, two TCP
+   connections may form.  Section 6.8 of [RFC4271] resolves this as
+   follows:
+
+   *  The peer with the higher BGP Identifier (Router-ID) retains its
+      outgoing connection.
+
+   *  The peer with the lower BGP Identifier drops its outgoing
+      connection and uses the incoming connection.
+
+   If a connection collision is detected in the OpenSent or OpenConfirm
+   state, the procedures defined in Section 6.8 of [RFC4271] apply.  The
+   BGP speaker detecting the collision SHALL send a NOTIFICATION message
+   with the Cease Error Code, terminate the corresponding TCP
+   connection, and transition the FSM to the Idle state.
+
+   Since the BGP Identifier is not known until the BGP OPEN message is
+   received, both competing TCP/TLS sessions may complete full TLS
+   establishment prior to collision resolution.  Once the BGP Identifier
+   comparison is performed, the speaker determined to have the lower-
+   precedence connection, as defined by [RFC4271], MUST terminate the
+   corresponding TCP/TLS connection.
+
+   As a result, the use of TLS does not modify the collision resolution
+   algorithm itself but may increase the connection establishment cost
+   and delay associated with collision handling, since one fully
+   established TCP/TLS session may subsequently be discarded.
+
+Peer A (lower Router-ID - loses)         Peer B (higher Router-ID - wins)
+  |                                         |
+  | <- both TCP+TLS connections up <-       |
+  | <- both BGP OPENs exchanged    <-       |
+  |                                         |
+  |  ** Collision: Peer A drops its         |
+  |     outgoing connection **              |
+  |                                         |
+  |--- BGP NOTIFICATION (Cease) ----------->|  (over outgoing conn, encrypted)
+  |--- TLS close_notify ------------------->|
+  |--- TCP FIN ---------------------------->|
+  |                                         |
+  |<===== Established on Peer B's conn ====>|
+
+         Figure 7: Teardown Sequence on the Losing Connection
+
+5.2.  TLS Session Continuity and Certificate Expiry Handling
+
+   If a new TCP/TLS connection is established, full TLS certificate
+   validation procedures MUST be performed during the new TLS handshake.
+
+   Certificate validity and peer authentication are performed during TLS
+   session establishment.  Expiration or revocation of a certificate
+   after successful establishment of an active TCP/TLS-protected BGP
+   session SHOULD NOT, by itself, trigger termination of the existing
+   session.
+
+   Implementations are not required to perform periodic TLS re-
+   authentication or certificate revalidation for active BGP sessions.
+   Existing TLS sessions MAY continue operating until normal BGP or
+   transport-layer termination occurs.
+
+6.  Operational Considerations
+
+   An implementation MAY support locally configurable transport security
+   policy modes for BGP over TCP-AO and TLS deployments.
+
+   The following operational modes are RECOMMENDED:
+
+   tls-required:  TLS is mandatory.  Session establishment MUST fail if
+      TLS negotiation or peer validation fails.
+
+   tls-preferred:  TLS establishment SHOULD be attempted.  If TLS
+      negotiation or validation fails, the implementation MAY continue
+      operation using TCP-AO-protected BGP transport based on local
+      policy.
+
+   ao-only:  The BGP session operates using TCP-AO-protected transport
+      without TLS establishment.
+
+   These modes allow operators to deploy BGP over TLS incrementally
+   while preserving interoperability with existing TCP-AO-protected
+   deployments.
+
+   Implementations supporting the "tls-preferred" mode SHOULD provide
+   configurable timeout behavior for TLS establishment prior to fallback
+   to TCP-AO-protected BGP transport.
+
+7.  Security Considerations
+
+   This document improves the security of BGP sessions, as the
+   information exchanged over the session is protected using TLS.  This
+   document mandates the use of TCP-AO, which protects the TLS stack
+   against payload injection attacks.
+
+   It is RECOMMENDED that an opportunistic TCP-AO approach be used, as
+   described in [I-D.piraux-tcp-ao-tls].  A router attempts to connect
+   using TCP-AO with a default key; once the TLS handshake completes, it
+   derives a new TCP-AO key from the TLS key.
+
+8.  IANA Considerations
+
+8.1.  Registration of the BOTLS ALPN Identification String
+
+   This document requests registration of a new entry in the "TLS
+   Application-Layer Protocol Negotiation (ALPN) Protocol IDs" registry.
+   The "botls" string identifies BGP over TLS:
+
+   Protocol                : BOTLS (BGP over TLS)
+   Identification Sequence : 0x62 0x6F 0x74 0x6C 0x73 ("botls")
+   Reference               : This document
+
+                     Figure 8: BOTLS ALPN Registration
+
+      *Editor's Note:* Earlier revisions of this draft requested
+      allocation of a dedicated TCP port (TBD1) for "botls" from the
+      "Service Name and Transport Protocol Port Number Registry".  That
+      request has been WITHDRAWN in favor of reusing TCP port 179 with
+      the Implicit TLS model described in this document.  Accordingly,
+      no new transport port is requested.
 
 Acknowledgments
 
-   The authors thank Dimitri Safonov for the TCP-AO implementation in
+   The authors thank Dmitry Safonov for the TCP-AO implementation in
    Linux.
+
+Contributors
+
+   Serge Krier Cisco Systems De Kleetlaan 6a 1831 Diegem Belgium Email:
+   sekrier@cisco.com
 
 Change log
 
@@ -193,30 +479,29 @@ References
 
 Normative References
 
-   [I-D.draft-piraux-tcp-ao-tls]
+   [I-D.hbq-bgp-tls-auth]
+              Haas, J., Beck, B., and Y. Qu, "TLS Authentication for
+              BGP", Work in Progress, Internet-Draft, draft-hbq-bgp-tls-
+              auth-00, 1 March 2026,
+              <https://datatracker.ietf.org/doc/html/draft-hbq-bgp-tls-
+              auth-00>.
+
+   [I-D.piraux-tcp-ao-tls]
               Piraux, M., Bonaventure, O., and T. Wirtgen,
               "Opportunistic TCP-AO with TLS", Work in Progress,
-              Internet-Draft, draft-piraux-tcp-ao-tls-02, 21 October
-              2024, <https://datatracker.ietf.org/doc/html/draft-piraux-
-              tcp-ao-tls-02>.
+              Internet-Draft, draft-piraux-tcp-ao-tls-03, 7 July 2025,
+              <https://datatracker.ietf.org/doc/html/draft-piraux-tcp-
+              ao-tls-03>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/rfc/rfc2119>.
 
-   [RFC2385]  Heffernan, A., "Protection of BGP Sessions via the TCP MD5
-              Signature Option", RFC 2385, DOI 10.17487/RFC2385, August
-              1998, <https://www.rfc-editor.org/rfc/rfc2385>.
-
    [RFC4271]  Rekhter, Y., Ed., Li, T., Ed., and S. Hares, Ed., "A
               Border Gateway Protocol 4 (BGP-4)", RFC 4271,
               DOI 10.17487/RFC4271, January 2006,
               <https://www.rfc-editor.org/rfc/rfc4271>.
-
-   [RFC4272]  Murphy, S., "BGP Security Vulnerabilities Analysis",
-              RFC 4272, DOI 10.17487/RFC4272, January 2006,
-              <https://www.rfc-editor.org/rfc/rfc4272>.
 
    [RFC5925]  Touch, J., Mankin, A., and R. Bonica, "The TCP
               Authentication Option", RFC 5925, DOI 10.17487/RFC5925,
@@ -227,27 +512,27 @@ Normative References
               Negotiation Extension", RFC 7301, DOI 10.17487/RFC7301,
               July 2014, <https://www.rfc-editor.org/rfc/rfc7301>.
 
-   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
-              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
-              May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+   [RFC8174]  "*** BROKEN REFERENCE ***".
+
+   [RFC8446]  "*** BROKEN REFERENCE ***".
 
 Informative References
 
-   [I-D.draft-retana-idr-bgp-quic]
+   [I-D.retana-idr-bgp-quic]
               Retana, A., Qu, Y., Haas, J., Chen, S., and J. Tantsura,
               "BGP over QUIC", Work in Progress, Internet-Draft, draft-
-              retana-idr-bgp-quic-07, 6 July 2025,
+              retana-idr-bgp-quic-09, 24 June 2026,
               <https://datatracker.ietf.org/doc/html/draft-retana-idr-
-              bgp-quic-07>.
+              bgp-quic-09>.
+
+   [RFC4272]  Murphy, S., "BGP Security Vulnerabilities Analysis",
+              RFC 4272, DOI 10.17487/RFC4272, January 2006,
+              <https://www.rfc-editor.org/rfc/rfc4272>.
 
    [RFC5082]  Gill, V., Heasley, J., Meyer, D., Savola, P., Ed., and C.
               Pignataro, "The Generalized TTL Security Mechanism
               (GTSM)", RFC 5082, DOI 10.17487/RFC5082, October 2007,
               <https://www.rfc-editor.org/rfc/rfc5082>.
-
-   [RFC8446]  Rescorla, E., "The Transport Layer Security (TLS) Protocol
-              Version 1.3", RFC 8446, DOI 10.17487/RFC8446, August 2018,
-              <https://www.rfc-editor.org/rfc/rfc8446>.
 
    [RFC9000]  Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based
               Multiplexed and Secure Transport", RFC 9000,
@@ -257,10 +542,20 @@ Informative References
 Authors' Addresses
 
    Thomas Wirtgen
-   UCLouvain & WELRI
-   Email: thomas.wirtgen@uclouvain.be
+   Unaffiliated
+   Email: thomas.wirtgen@gmail.com
 
 
    Olivier Bonaventure
    UCLouvain & WELRI
    Email: olivier.bonaventure@uclouvain.be
+
+
+   AravindBabu MahendraBabu
+   Cisco Systems
+   Email: aramahen@cisco.com
+
+
+   Chennakesava Reddy Gaddam
+   Cisco Systems
+   Email: chgaddam@cisco.com

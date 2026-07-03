@@ -7,29 +7,40 @@
 <title>BGP over TLS/TCP</title>
 <meta content="Thomas Wirtgen" name="author">
 <meta content="Olivier Bonaventure" name="author">
-<meta content="
-       This document specifies the utilization of TCP/TLS to support BGP. 
-    " name="description">
-<meta content="xml2rfc 3.29.0" name="generator">
+<meta content="AravindBabu MahendraBabu" name="author">
+<meta content="Chennakesava Reddy Gaddam" name="author">
+<meta content='
+       This document specifies the use of TLS over TCP to support BGP. The
+Border Gateway Protocol (BGP) relies on TCP to establish sessions
+between routers. While the TCP Authentication Option (TCP-AO) provides
+transport-layer integrity protection against spoofing and reset attacks,
+it does not provide confidentiality, cryptographic peer identity, or
+scalable key management. This document specifies a method for
+establishing a secure BGP session by running BGP over a TLS 1.3
+session. The underlying TCP transport  MUST  be protected using TCP-AO.
+An "Implicit TLS" model on TCP port 179 is specified as the preferred
+mechanism. 
+    ' name="description">
+<meta content="xml2rfc 3.34.0" name="generator">
 <meta content="tcp" name="keyword">
 <meta content="tls" name="keyword">
 <meta content="bgp" name="keyword">
 <meta content="tcp-ao" name="keyword">
 <meta content="draft-wirtgen-bgp-tls-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.29.0
-    Python 3.12.11
-    ConfigArgParse 1.7
+  xml2rfc 3.34.0
+    Python 3.14.5
+    ConfigArgParse 1.7.5
     google-i18n-address 3.1.1
-    intervaltree 3.1.0
+    intervaltree 3.2.1
     Jinja2 3.1.6
-    lxml 5.3.1
-    platformdirs 4.3.8
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.10.0
     pycountry 24.6.1
-    PyYAML 6.0.2
-    requests 2.32.4
-    setuptools 80.9.0
-    wcwidth 0.2.13
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.8.2
 -->
 <link href="draft-wirtgen-bgp-tls.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -170,7 +181,7 @@
   font-weight: 400;
   font-display: swap;
   src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
   font-family: 'Oxygen Mono';
@@ -178,7 +189,8 @@
   font-weight: 400;
   font-display: swap;
   src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 }
 
 @font-face {
@@ -295,16 +307,19 @@ h1, h2, h3, h4, h5, h6 {
   font-size-adjust: 0.5;
   color: var(--title-color);
 }
-h1#title {
-  font-size: 32px;
-  line-height: 40px;
-  clear: both;
-}
-h1#title, h1#rfcnum {
-  margin: 1.5em 0 0.2em;
-}
-h1#rfcnum + h1#title {
-  margin: 0.2em 0;
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
 }
 
 h1, h2, h3 {
@@ -324,10 +339,10 @@ h4, h5, h6 {
 #abstract+p {
   font-size: 18px;
   line-height: 24px;
-}
-#abstract+p code, #abstract+p samp, #abstract+p tt {
-  font-size: 16px;
-  line-height: 0;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
 }
 
 p {
@@ -338,59 +353,59 @@ p {
 div {
   margin: 0;
 }
-.alignRight.art-text {
-  background-color: var(--highlight-color);
-  border: 1px solid var(--line-color);
-  border-radius: 3px;
-  padding: 0.5em 1em 0;
-  margin-bottom: 0.5em;
-}
-.alignRight.art-text pre {
-  padding: 0;
-  width: auto;
-}
 .alignRight {
   margin: 1em 0;
-}
-.alignRight > *:first-child {
-  border: none;
-  margin: 0;
-  float: right;
-  clear: both;
-}
-.alignRight > *:nth-child(2) {
-  clear: both;
-  display: block;
-  border: none;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
 }
 svg {
   display: block;
-}
-/* font-family isn't space-separated, but =~ will have to do */
-svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
-  font-family: var(--font-mono);
-}
-.alignCenter.art-text {
-  background-color: var(--highlight-color);
-  border: 1px solid var(--line-color);
-  border-radius: 3px;
-  padding: 0.5em 1em 0;
-  margin-bottom: 0.5em;
-}
-.alignCenter.art-text pre {
-  padding: 0;
-  width: auto;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
 }
 .alignCenter {
   margin: 1em 0;
-}
-.alignCenter > *:first-child {
-  border: none;
-  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
-     support flexbox yet.
-  */
-  display: table;
-  margin: 0 auto;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
 }
 
 /* lists */
@@ -428,26 +443,25 @@ dl {
     --indent: 5ch;
     & > dt {
       min-width: calc(var(--indent) - 2ch);
+      float: none;
     }
-  }
-  &.olPercent > dt {
-    float: none;
   }
 
   dl > dd > & {
     margin-top: 0.5em;
     margin-bottom: 0;
   }
-}
-dl:not(.dlNewline) > dt {
-  float: left;
-  margin-right: 2ch;
-  min-width: 8ch;
-}
-dl > dd {
-  margin-bottom: .8em;
-  margin-left: var(--indent) !important; /* stupid element overrides */
-  min-height: 2ex;
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
 }
 :is(dl.compact, .dlCompact) > dd {
   margin-bottom: 0;
@@ -463,20 +477,22 @@ dl > dd {
 }
 
 /* links */
-a, a[href].selfRef:hover {
+a {
   text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
 }
-a[href] {
-  color: var(--link-color);
-}
-a[href].selfRef, .iref + a[href].internal {
+.iref + a[href].internal {
   color: var(--text-color);
-}
-a[href]:hover {
-  text-decoration: underline;
-}
-a[href].selfRef:hover {
-  background-color: var(--highlight-color);
 }
 a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
   white-space: nowrap;
@@ -512,9 +528,9 @@ img {
 figure {
   margin: 0.5em 0;
   padding: 0;
-}
-figure blockquote {
-  margin: 0.8em 0.4em 0.4em;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
 }
 figcaption, caption {
   font-style: italic;
@@ -524,17 +540,19 @@ figcaption, caption {
 }
 @media screen {
   /* Auto-collapse boilerplate. */
-  :is(#status-of-memo, #copyright) p {
-    margin: -2px 0;
-    max-height: 0;
-    transition: max-height 2s ease, margin 0.5s ease 0.5s;
-    overflow: hidden;
-  }
-  :is(#status-of-memo, #copyright):hover p,
-  :is(#status-of-memo, #copyright) h2:target ~ p {
-    margin: 0.5em 0;
-    max-height: 500px;
-    overflow: auto;
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
   }
   pre, svg {
     display: inline-block;
@@ -570,6 +588,7 @@ aside, blockquote {
 }
 blockquote {
   margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
 }
 cite {
   display: block;
@@ -583,25 +602,17 @@ table {
   max-width: 100%;
   margin: 0 0 1em;
   border-collapse: collapse;
-}
-table.right {
-  margin-left: auto;
-}
-table.center {
-  margin-left: auto;
-  margin-right: auto;
-}
-table.left {
-  margin-right: auto;
-}
-table .text-left {
-  text-align: left;
-}
-table .text-center {
-  text-align: center;
-}
-table .text-right {
-  text-align: right;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
 }
 
 thead, tbody {
@@ -621,13 +632,6 @@ th {
 :is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
   background-color: var(--highlight-color);
 }
-table caption {
-  margin: 0;
-  padding: 3px 0 3px 1em;
-}
-table p {
-  margin: 0;
-}
 
 /* pilcrow */
 a.pilcrow {
@@ -638,18 +642,16 @@ a.pilcrow {
     color: var(--pilcrow-weak);
     &:hover { text-decoration: none; }
   }
-}
-@media not print {
-  :hover > a.pilcrow {
-    opacity: 1;
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
   }
-  a.pilcrow[href]:hover {
-    color: var(--pilcrow-strong);
-    background-color: transparent;
-  }
-}
-@media print {
-  a.pilcrow {
+  @media print {
     display: none;
   }
 }
@@ -708,9 +710,9 @@ sub, sup {
   font-size: 0.9em;
   font-style: italic;
   margin-top: 2em;
-}
-.docInfo .prepared {
-  float: right;
+  & .prepared {
+    float: right;
+  }
 }
 
 /* table of contents */
@@ -800,23 +802,27 @@ hr.addr {
   max-width: calc(100% - 16px);
 }
 @media (min-width: 500px) {
-  #authors-addresses > section {
-    column-count: 2;
-    column-gap: 20px;
-  }
-  #authors-addresses > section > h2 {
-    column-span: all;
-  }
-  /* hack for break-inside: avoid-column */
-  #authors-addresses address {
-    display: inline-block;
-    break-inside: avoid-column;
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
   }
 }
 
 /* Comments */
-.rfcEditorRemove p:first-of-type {
-  font-style: italic;
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
 }
 .cref {
   background-color: rgba(249, 232, 105, 0.3);
@@ -827,19 +833,21 @@ hr.addr {
 }
 
 @media screen {
-  #toc nav {
-    font-family: var(--font-title);
-    font-weight: 360;
-    & > ul { margin-bottom: 2em; }
-    & ul {
-      margin: 0 0 0 4px;
-      & :is(p, li) {
-        margin: 2px 0;
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
       }
     }
-  }
-  #toc a.toplink {
-    float: right;
+    & a.toplink {
+      float: right;
+    }
   }
 }
 @media not screen {
@@ -860,54 +868,54 @@ hr.addr {
     margin: 0;
     border-bottom: 1px solid #ccc;
     opacity: 0.6;
-  }
-  #toc h2 {
-    margin: 0;
-    padding: 2px 0 2px 6px;
-    padding-right: 1em;
-    font-size: 18px;
-    line-height: 24px;
-    min-width: 190px;
-    text-align: right;
-    background-color: #444;
-    color: white;
-    cursor: pointer;
-    &::before { /* css hamburger */
-      float: right;
-      position: relative;
-      width: 1em;
-      height: 1px;
-      left: -164px;
-      margin: 8px 0 0 0;
-      background: white none repeat scroll 0 0;
-      box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
-      content: "";
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
     }
-  }
-  #toc nav {
-    display: none;
-    background-color: var(--background-color);
-    padding: 0.5em 1em 1em;
-    overflow: auto;
-    overscroll-behavior: contain;
-    height: calc(100vh - 48px);
-    border-left: 1px solid #ddd;
-  }
-  #toc.active {
-    opacity: 1;
-    & nav { display: block; }
-  }
-  /* Make the collapsed ToC header render white on gray also when it's a link */
-  #toc h2 a,
-  #toc h2 a:is(:link, :focus, :hover),
-  #toc a.toplink,
-  #toc a.toplink:hover {
-    color: white;
-    background-color: #444;
-    text-decoration: none;
-  }
-  #toc a.toplink {
-    margin: 2px 0.5em 0;
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
   }
 }
 
@@ -926,26 +934,26 @@ hr.addr {
     margin: 0;
     padding: 0;
     z-index: 1;
-  }
-  #toc h2 {
-    margin: 0;
-    padding: 0.25em 1em 1em 0;
-  }
-  #toc nav {
-    display: block;
-    height: calc(90vh - 84px);
-    bottom: 0;
-    padding: 0.5em 0 2em;
-    overflow: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
   }
   img { /* future proofing */
     max-width: 100%;
     height: auto;
-  }
-  #toc a.toplink {
-    margin: 8px 0.5em 0;
   }
 }
 
@@ -961,12 +969,13 @@ hr.addr {
   #n-copyright-notice {
     border-bottom: none;
   }
-  #toc, #n-introduction {
-    page-break-before: always;
-  }
   #toc {
+    page-break-before: always;
     border-top: none;
     padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
   }
   figure, pre, .vcard {
     page-break-inside: avoid;
@@ -1028,17 +1037,19 @@ hr.addr {
 }
 
 /* SVG Trick: a prefix match works because only black and white are allowed */
-svg :is([stroke="black"], [stroke^="#000"]) {
-  stroke: var(--text-color);
-}
-svg :is([stroke="white"], [stroke^="#fff"]) {
-  stroke: var(--background-color);
-}
-svg :is([fill="black"], [fill^="#000"], :not([fill])) {
-  fill: var(--text-color);
-}
-svg :is([fill="white"], [fill^="#fff"]) {
-  fill: var(--background-color);
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
 }
 </style>
 
@@ -1048,11 +1059,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">bgp-tls</td>
-<td class="right">July 2025</td>
+<td class="right">July 2026</td>
 </tr></thead>
 <tfoot><tr>
-<td class="left">Wirtgen &amp; Bonaventure</td>
-<td class="center">Expires 8 January 2026</td>
+<td class="left">Wirtgen, et al.</td>
+<td class="center">Expires 4 January 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1065,21 +1076,29 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-wirtgen-bgp-tls-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-07-07" class="published">7 July 2025</time>
+<time datetime="2026-07-03" class="published">3 July 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
-<dd class="intended-status">Experimental</dd>
+<dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-01-08">8 January 2026</time></dd>
+<dd class="expires"><time datetime="2027-01-04">4 January 2027</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
       <div class="author-name">T. Wirtgen</div>
-<div class="org">UCLouvain &amp; WELRI</div>
+<div class="org">Unaffiliated</div>
 </div>
 <div class="author">
       <div class="author-name">O. Bonaventure</div>
 <div class="org">UCLouvain &amp; WELRI</div>
+</div>
+<div class="author">
+      <div class="author-name">A. MahendraBabu</div>
+<div class="org">Cisco Systems</div>
+</div>
+<div class="author">
+      <div class="author-name">C. R. Gaddam</div>
+<div class="org">Cisco Systems</div>
 </div>
 </dd>
 </dl>
@@ -1087,7 +1106,16 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">BGP over TLS/TCP</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document specifies the utilization of TCP/TLS to support BGP.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document specifies the use of TLS over TCP to support BGP. The
+Border Gateway Protocol (BGP) relies on TCP to establish sessions
+between routers. While the TCP Authentication Option (TCP-AO) provides
+transport-layer integrity protection against spoofing and reset attacks,
+it does not provide confidentiality, cryptographic peer identity, or
+scalable key management. This document specifies a method for
+establishing a secure BGP session by running BGP over a TLS 1.3
+session. The underlying TCP transport <span class="bcp14">MUST</span> be protected using TCP-AO.
+An "Implicit TLS" model on TCP port 179 is specified as the preferred
+mechanism.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1102,7 +1130,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/idr/">https://mailarchive.ietf.org/arch/browse/idr/</a></span>.
         Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/idr/">https://www.ietf.org/mailman/listinfo/idr/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
 <p id="section-note.1-4">Source for this draft and an issue tracker can be found at
-        <span><a href="https://github.com/obonaventure/draft-bgp-tls">https://github.com/obonaventure/draft-bgp-tls</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+        <span><a href="https://github.com/IPNetworkingLab/draft-bgp-tls">https://github.com/IPNetworkingLab/draft-bgp-tls</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
 </section>
 <div id="status-of-memo">
 <section id="section-boilerplate.1">
@@ -1123,7 +1151,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 8 January 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 4 January 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1132,7 +1160,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
         </h2>
 <p id="section-boilerplate.2-1">
-            Copyright (c) 2025 IETF Trust and the persons identified as the
+            Copyright (c) 2026 IETF Trust and the persons identified as the
             document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.2-2">
             This document is subject to BCP 78 and the IETF Trust's Legal
@@ -1159,33 +1187,83 @@ svg :is([fill="white"], [fill^="#fff"]) {
             <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
-            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-summary-of-operation" class="internal xref">Summary of operation</a></p>
+            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-summary-of-operation" class="internal xref">Summary of Operation</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
-            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-transport" class="internal xref">Transport</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-overview" class="internal xref">Overview</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-tls-authentication-for-bgp" class="internal xref">TLS Authentication for BGP</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-initiating-the-tls-procedur" class="internal xref">Initiating the TLS Procedure</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
+                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-connection-establishment-fa" class="internal xref">Connection Establishment Failures</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4.2.1">
+                    <p id="section-toc.1-1.4.2.4.2.1.1"><a href="#section-4.4.1" class="auto internal xref">4.4.1</a>.  <a href="#name-tls-clienthello-received-by" class="internal xref">TLS ClientHello received by a non-TLS peer</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4.2.2">
+                    <p id="section-toc.1-1.4.2.4.2.2.1"><a href="#section-4.4.2" class="auto internal xref">4.4.2</a>.  <a href="#name-tls-handshake-timeout" class="internal xref">TLS Handshake Timeout</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.5">
+                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-alpn-for-bgp-over-tls" class="internal xref">ALPN for BGP over TLS</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
-            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-connection-and-session-mana" class="internal xref">Connection and Session Management</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-connection-collision-detect" class="internal xref">Connection Collision Detection</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-tls-session-continuity-and-" class="internal xref">TLS Session Continuity and Certificate Expiry Handling</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-operational-considerations" class="internal xref">Operational Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref"></a><a href="#name-change-log" class="internal xref">Change log</a></p>
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref"></a><a href="#name-references" class="internal xref">References</a></p>
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
-                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref"></a><a href="#name-normative-references" class="internal xref">Normative References</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref"></a><a href="#name-informative-references" class="internal xref">Informative References</a></p>
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-registration-of-the-botls-a" class="internal xref">Registration of the BOTLS ALPN Identification String</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref"></a><a href="#name-contributors" class="internal xref">Contributors</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref"></a><a href="#name-change-log" class="internal xref">Change log</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref"></a><a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1">
+                <p id="section-toc.1-1.12.2.1.1"><a href="#section-12.1" class="auto internal xref"></a><a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.2">
+                <p id="section-toc.1-1.12.2.2.1"><a href="#section-12.2" class="auto internal xref"></a><a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
 </li>
         </ul>
 </nav>
@@ -1196,22 +1274,34 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">The Border Gateway Protocol (BGP) <span>[<a href="#RFC4271" class="cite xref">RFC4271</a>]</span> relies on the TCP protocol
-to establish BGP sessions between routers. A recent draft
-<span>[<a href="#I-D.draft-retana-idr-bgp-quic" class="cite xref">I-D.draft-retana-idr-bgp-quic</a>]</span> has proposed to replace TCP with
-the QUIC protocol <span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>. QUIC brings many features compared to
-TCP including security, the support of multiple streams or datagrams.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">From a security viewpoint, an important benefit of QUIC compared to TCP is
-that QUIC by design prevents injection attacks that are possible when
-TCP is used by BGP <span>[<a href="#RFC4272" class="cite xref">RFC4272</a>]</span>. Several techniques can be used by BGP routers
-to counter this attacks <span>[<a href="#RFC5082" class="cite xref">RFC5082</a>]</span> <span>[<a href="#RFC5925" class="cite xref">RFC5925</a>]</span>. TCP-AO <span>[<a href="#RFC5925" class="cite xref">RFC5925</a>]</span>
-authenticates the packets exchanged over a BGP session provides similar
-features as QUIC. However, it is notoriously difficult to configure the
-keys used to protect BGP sessions.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">The widespread deployment of TLS <span>[<a href="#RFC8446" class="cite xref">RFC8446</a>]</span> combined with the possibility of
-deriving TCP-AO keys from the TLS handshake <span>[<a href="#I-D.draft-piraux-tcp-ao-tls" class="cite xref">I-D.draft-piraux-tcp-ao-tls</a>]</span>
-creates an interest in using TLS to secure BGP sessions. This document
-describes how BGP can operate over TCP/TLS.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-1">The Border Gateway Protocol (BGP) <span>[<a href="#RFC4271" class="cite xref">RFC4271</a>]</span> relies on TCP to
+establish BGP sessions between routers. A recent draft
+<span>[<a href="#I-D.retana-idr-bgp-quic" class="cite xref">I-D.retana-idr-bgp-quic</a>]</span> has proposed replacing TCP with the QUIC
+protocol <span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>. QUIC provides several advantages over TCP,
+including security, support for multiple streams, and datagram
+transport.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">From a security viewpoint, an important benefit of QUIC compared to TCP
+is that QUIC, by design, prevents the injection attacks that are
+possible when TCP is used by BGP <span>[<a href="#RFC4272" class="cite xref">RFC4272</a>]</span>. Several techniques exist
+to counter such attacks <span>[<a href="#RFC5082" class="cite xref">RFC5082</a>]</span> and <span>[<a href="#RFC5925" class="cite xref">RFC5925</a>]</span>.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">TCP-AO <span>[<a href="#RFC5925" class="cite xref">RFC5925</a>]</span> authenticates the packets exchanged over a BGP
+session and enhances transport-layer integrity by protecting TCP
+segments against spoofing and reset attacks. However, TCP-AO does not
+provide encryption, cryptographic identity, or scalable key management.
+TCP-AO <span class="bcp14">SHOULD</span> be used to protect BGP transport traffic.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">TLS <span>[<a href="#RFC8446" class="cite xref">RFC8446</a>]</span> introduces authenticated peer identities,
+confidentiality of routing messages, and cryptographic agility aligned
+with modern compliance requirements. The widespread deployment of TLS
+creates an interest in using Mutual TLS (mTLS) to secure BGP sessions.
+TLS complements TCP-AO: TCP-AO authenticates the entire TCP segment,
+covering both the TCP header and payload, to provide integrity and
+peer authentication at the transport layer. mTLS additionally encrypts
+and authenticates the application data (the TCP payload), and
+authenticates both BGP endpoints.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-5">This document describes how to establish a secure BGP session using
+mTLS. The underlying TCP transport <span class="bcp14">MUST</span> be protected using TCP-AO
+<span>[<a href="#RFC5925" class="cite xref">RFC5925</a>]</span> with pre-shared key authentication or deriving TCP-AO
+keys from the TLS handshake as described in <span>[<a href="#I-D.piraux-tcp-ao-tls" class="cite xref">I-D.piraux-tcp-ao-tls</a>]</span>.<a href="#section-1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1223,143 +1313,505 @@ describes how BGP can operate over TCP/TLS.<a href="#section-1-3" class="pilcrow
 "<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
 described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
 appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
-<p id="section-2-2">This document uses network byte order (that is, big endian) values.
-Fields are placed starting from the high-order bits of each byte.<a href="#section-2-2" class="pilcrow">¶</a></p>
+<p id="section-2-2">This document uses network byte order (that is, big-endian). Fields are
+placed starting from the high-order bits of each byte.<a href="#section-2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="summary-of-operation">
 <section id="section-3">
       <h2 id="name-summary-of-operation">
-<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-summary-of-operation" class="section-name selfRef">Summary of operation</a>
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-summary-of-operation" class="section-name selfRef">Summary of Operation</a>
       </h2>
-<p id="section-3-1">A BGP over TLS/TCP session is established in two phases:<a href="#section-3-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-3-2.1">
-          <p id="section-3-2.1.1">establish a transport layer connection using TCP<a href="#section-3-2.1.1" class="pilcrow">¶</a></p>
+<p id="section-3-1">A BGP over TLS/TCP-AO session is established in two phases:<a href="#section-3-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-3-2">
+<li id="section-3-2.1">
+          <p id="section-3-2.1.1">A TCP connection is established on port 179. The integrity of the
+TCP segments is protected by using TCP-AO.<a href="#section-3-2.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-3-2.2">
-          <p id="section-3-2.2.1">establish a TLS session over the TCP connection<a href="#section-3-2.2.1" class="pilcrow">¶</a></p>
+        <li id="section-3-2.2">
+          <p id="section-3-2.2.1">A TLS session is established over this TCP connection.<a href="#section-3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-3-3">With mandatory TCP-AO as the underlying transport protection, TCP port
+179 continues to provide authenticated transport establishment. This
+avoids the need for a new port while preserving the existing BGP
+operational model.<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-4">The key benefits of this approach are as follows:<a href="#section-3-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3-5.1">
+          <p id="section-3-5.1.1">The existing BGP TCP port 179 transport is reused.<a href="#section-3-5.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-3-5.2">
+          <p id="section-3-5.2.1">TCP-AO protects the integrity of the TCP segment.<a href="#section-3-5.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-3-5.3">
+          <p id="section-3-5.3.1">Firewall, ACL, and operational deployment changes are avoided.<a href="#section-3-5.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-3-3">The TCP connection <span class="bcp14">SHOULD</span> be established on port TBD1.<a href="#section-3-3" class="pilcrow">¶</a></p>
-<p id="section-3-4">During the establishment of the TLS session, the router that initiates the
-connection <span class="bcp14">MUST</span> use the "botls" token in the Application Layer Protocol
-Negotiation (ALPN) extension <span>[<a href="#RFC7301" class="cite xref">RFC7301</a>]</span>. The support for other ALPN <span class="bcp14">MUST NOT</span> be proposed during the TLS handshake.<a href="#section-3-4" class="pilcrow">¶</a></p>
-<p id="section-3-5">Once the TLS handshake is established and finished, the BGP session is
-initiated as defined in <span>[<a href="#RFC4271" class="cite xref">RFC4271</a>]</span> and the protocol operates in the
-same way as a classic BGP over TCP session. The difference is that the
-BGP session is now encrypted and authenticated using the TLS layer.
-As in <span>[<a href="#I-D.draft-retana-idr-bgp-quic" class="cite xref">I-D.draft-retana-idr-bgp-quic</a>]</span>, the TLS authentication parameters used for this connection
-are out of the scope of this draft.<a href="#section-3-5" class="pilcrow">¶</a></p>
+<p id="section-3-6">During the establishment of the TLS session, the router that initiates
+the connection <span class="bcp14">MUST</span> use the "botls" token in the Application-Layer
+Protocol Negotiation (ALPN) extension <span>[<a href="#RFC7301" class="cite xref">RFC7301</a>]</span>. Other ALPN tokens
+<span class="bcp14">MUST NOT</span> be included in the TLS handshake.<a href="#section-3-6" class="pilcrow">¶</a></p>
+<p id="section-3-7">Once the TLS handshake is complete, the BGP session is initiated as
+defined in <span>[<a href="#RFC4271" class="cite xref">RFC4271</a>]</span>, and the protocol operates in the same manner as
+a classic BGP-over-TCP session, except that the session is encrypted
+and authenticated by the TLS layer.<a href="#section-3-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="transport">
+<section id="section-4">
+      <h2 id="name-transport">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-transport" class="section-name selfRef">Transport</a>
+      </h2>
+<div id="overview">
+<section id="section-4.1">
+        <h3 id="name-overview">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-overview" class="section-name selfRef">Overview</a>
+        </h3>
+<p id="section-4.1-1">This document specifies the use of TCP port 179 rather than a dedicated
+port. The use of a dedicated port is purely an operational and
+deployment choice.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="tls-authentication-for-bgp">
+<section id="section-4.2">
+        <h3 id="name-tls-authentication-for-bgp">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-tls-authentication-for-bgp" class="section-name selfRef">TLS Authentication for BGP</a>
+        </h3>
+<p id="section-4.2-1"><span>[<a href="#I-D.hbq-bgp-tls-auth" class="cite xref">I-D.hbq-bgp-tls-auth</a>]</span> discusses authentication considerations for
+running BGP over TLS protocols and defines a PKI framework to provide
+for authenticating BGP peering sessions.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="initiating-the-tls-procedure">
+<section id="section-4.3">
+        <h3 id="name-initiating-the-tls-procedur">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-initiating-the-tls-procedur" class="section-name selfRef">Initiating the TLS Procedure</a>
+        </h3>
+<p id="section-4.3-1">This document specifies the Implicit TLS model for BGP session
+establishment. Both peers <span class="bcp14">MUST</span> be pre-configured to enable TLS
+on port 179. After the TCP-AO connection is established, the
+active peer (TLS client) <span class="bcp14">MUST</span> transmit a TLS ClientHello as its
+first application-layer bytes; the passive peer (TLS server)
+<span class="bcp14">MUST</span> expect a TLS ClientHello before sending any data. BGP
+exchanges <span class="bcp14">MUST NOT</span> commence until the TLS handshake has
+completed successfully. No plaintext BGP bytes appear on the
+wire; use of TLS is assumed entirely by configuration.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<span id="name-implicit-tls-establishment-"></span><div id="fig-implicit-tls">
+<figure id="figure-1">
+          <div class="alignLeft art-text artwork" id="section-4.3-2.1">
+<pre>
+Peer A (active = TLS client)         Peer B (passive = TLS server, :179)
+  |--- TCP SYN + AO(MAC) (port 179) ------&gt;|
+  |&lt;-- TCP SYN-ACK + AO(MAC) --------------|
+  |--- TCP ACK + AO(MAC) -----------------&gt;|
+  |                                        |  &lt;- TCP up (TCP-AO), no BGP yet
+  |--- TLS ClientHello -------------------&gt;|  &lt;- TLS 1.3 begins
+  |&lt;-- ServerHello, {EncryptedExtensions}, |
+  |    {CertificateRequest}, {Certificate},|
+  |    {CertificateVerify}, {Finished} ----|  &lt;- server's whole flight;
+  |                                        |     server is already "done"
+  |--- {Certificate}, {CertificateVerify}, |
+  |    {Finished} ------------------------&gt;|  &lt;- client authenticates and
+  |                                        |     sends the LAST Finished
+  |                                        |  &lt;- Encrypted, mutually-
+  |                                        |     authenticated channel up
+  |--- BGP OPEN (inside TLS) -------------&gt;|  &lt;- BGP exchanges start here
+  |&lt;-- BGP OPEN (inside TLS) --------------|
+  |--- BGP KEEPALIVE ---------------------&gt;|
+  |&lt;-- BGP KEEPALIVE ----------------------|
+  |                                        |  &lt;- ESTABLISHED
+</pre>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-implicit-tls-establishment-" class="selfRef">Implicit TLS Establishment on Port 179</a>
+          </figcaption></figure>
+</div>
+<p id="section-4.3-3">This model is simple, requires no protocol changes to BGP, and incurs
+no negotiation overhead. In this model, both endpoints <span class="bcp14">MUST</span> be
+explicitly configured for TLS.<a href="#section-4.3-3" class="pilcrow">¶</a></p>
+<p id="section-4.3-4">Implementations <span class="bcp14">MUST</span> support TLS 1.3 <span>[<a href="#RFC8446" class="cite xref">RFC8446</a>]</span> with mutual TLS
+authentication. The connection <span class="bcp14">MUST NOT</span> proceed for any lower TLS
+version.<a href="#section-4.3-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="connection-establishment-failures">
+<section id="section-4.4">
+        <h3 id="name-connection-establishment-fa">
+<a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-connection-establishment-fa" class="section-name selfRef">Connection Establishment Failures</a>
+        </h3>
+<p id="section-4.4-1">An active BGP peer <span class="bcp14">MUST</span> connect over a TLS-protected TCP-AO
+connection and never over plaintext TCP. Any failure within the TLS
+layer is abstracted from the BGP Finite State Machine (FSM), which
+observes only a generic connection failure event. TLS error alerts
+are defined in Section 6.2 of <span>[<a href="#RFC8446" class="cite xref">RFC8446</a>]</span>. The active BGP peer should
+continue attempting the TLS establishment. After the configured number
+of failed attempts, it may proceed based on the local policy decisions
+described in <span><a href="#operational-considerations" class="internal xref">Operational Considerations</a> (<a href="#operational-considerations" class="auto internal xref">Section 6</a>)</span>,
+using TCP-AO authentication only.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<span id="name-abstraction-of-tls-failures"></span><div id="fig-tls-abstraction">
+<figure id="figure-2">
+          <div class="alignLeft art-text artwork" id="section-4.4-2.1">
+<pre>
+TCP connected (TCP-AO authenticated)
+  -&gt; TLS layer
+       -&gt; TLS succeeded? -&gt; BGP socket ready -&gt; send OPEN
+       -&gt; TLS failed?    -&gt; TcpConnectionFails
+                            -&gt; Local Policy decision
+</pre>
+</div>
+<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
+<a href="#name-abstraction-of-tls-failures" class="selfRef">Abstraction of TLS Failures from the BGP FSM</a>
+          </figcaption></figure>
+</div>
+<div id="tls-clienthello-received-by-a-non-tls-peer">
+<section id="section-4.4.1">
+          <h4 id="name-tls-clienthello-received-by">
+<a href="#section-4.4.1" class="section-number selfRef">4.4.1. </a><a href="#name-tls-clienthello-received-by" class="section-name selfRef">TLS ClientHello received by a non-TLS peer</a>
+          </h4>
+<p id="section-4.4.1-1">A non-TLS peer reads the TLS ClientHello (0x16 0x03 0x01 ...)
+as a BGP message header. As per Section 6.1 of <span>[<a href="#RFC4271" class="cite xref">RFC4271</a>]</span>, the
+16-octet Marker <span class="bcp14">MUST</span> be all 0xFF; because the record begins with 0x16,
+the check fails immediately. As per Section 4.5 of <span>[<a href="#RFC4271" class="cite xref">RFC4271</a>]</span>, the
+BGP connection is closed immediately after the NOTIFICATION message
+is sent.<a href="#section-4.4.1-1" class="pilcrow">¶</a></p>
+<span id="name-clienthello-interpreted-as-"></span><div id="fig-clienthello-malformed">
+<figure id="figure-3">
+            <div class="alignLeft art-text artwork" id="section-4.4.1-2.1">
+<pre>
+Peer A (active = TLS client)          Peer B (plain BGP, non-TLS)
+  |-- TCP handshake -------------------&gt;|  &lt;- TCP up
+  |-- TLS ClientHello -----------------&gt;|
+  |   Content Type: 16                  |  Marker byte 0x16 != 0xFF
+  |   Version:      03 01               |  -&gt; Connection Not Synchronized
+  |&lt;- BGP NOTIFICATION -----------------|
+  |&lt;- TCP FIN --------------------------|
+</pre>
+</div>
+<figcaption><a href="#figure-3" class="selfRef">Figure 3</a>:
+<a href="#name-clienthello-interpreted-as-" class="selfRef">ClientHello Interpreted as a Malformed BGP Header</a>
+            </figcaption></figure>
+</div>
+<p id="section-4.4.1-3">After receiving TcpConnectionFails (Event 18), Peer A <span class="bcp14">SHOULD</span> terminate
+the connection and <span class="bcp14">MAY</span> initiate a new connection attempt based on local
+policy.<a href="#section-4.4.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="tls-handshake-timeout">
+<section id="section-4.4.2">
+          <h4 id="name-tls-handshake-timeout">
+<a href="#section-4.4.2" class="section-number selfRef">4.4.2. </a><a href="#name-tls-handshake-timeout" class="section-name selfRef">TLS Handshake Timeout</a>
+          </h4>
+<p id="section-4.4.2-1">If a non-TLS peer accepts the TCP connection but neither sends a BGP
+NOTIFICATION message nor resets the connection after receiving a TLS
+ClientHello, the TLS-capable peer that initiated the TLS handshake may
+eventually experience a TLS connection timeout and transition, via
+TcpConnectionFails (Event 18) or ConnectRetryTimer expiry, back to the
+Idle state.<a href="#section-4.4.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="alpn-for-bgp-over-tls">
+<section id="section-4.5">
+        <h3 id="name-alpn-for-bgp-over-tls">
+<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-alpn-for-bgp-over-tls" class="section-name selfRef">ALPN for BGP over TLS</a>
+        </h3>
+<p id="section-4.5-1">Application-Layer Protocol Negotiation <span>[<a href="#RFC7301" class="cite xref">RFC7301</a>]</span> allows a TLS client
+to declare the application protocol it intends to use within the TLS
+session. For BGP over TLS, the ALPN identifier is the octet sequence
+0x62 0x6F 0x74 0x6C 0x73 ("botls"), defined by this document and
+registered as specified in <a href="#iana-considerations" class="auto internal xref">Section 8</a>.<a href="#section-4.5-1" class="pilcrow">¶</a></p>
+<p id="section-4.5-2">An active BGP peer initiating the TLS exchange <span class="bcp14">MUST</span> include the following
+extension in its ClientHello:<a href="#section-4.5-2" class="pilcrow">¶</a></p>
+<span id="name-alpn-extension-in-clienthel"></span><div id="fig-alpn-clienthello">
+<figure id="figure-4">
+          <div class="alignLeft art-text artwork" id="section-4.5-3.1">
+<pre>
+TLS ClientHello extensions:
+  application_layer_protocol_negotiation (0x0010):
+    ProtocolNameList:
+      list length: 00 06
+      name length: 05
+      "botls":     62 6F 74 6C 73
+</pre>
+</div>
+<figcaption><a href="#figure-4" class="selfRef">Figure 4</a>:
+<a href="#name-alpn-extension-in-clienthel" class="selfRef">ALPN Extension in ClientHello</a>
+          </figcaption></figure>
+</div>
+<p id="section-4.5-4">The passive BGP peer <span class="bcp14">MUST</span> indicate the selected protocol in the
+EncryptedExtensions message:<a href="#section-4.5-4" class="pilcrow">¶</a></p>
+<span id="name-alpn-extension-in-encrypted"></span><div id="fig-alpn-encrypted">
+<figure id="figure-5">
+          <div class="alignLeft art-text artwork" id="section-4.5-5.1">
+<pre>
+application_layer_protocol_negotiation (0x0010):
+  ProtocolNameList:
+    list length: 00 06
+    name length: 05
+    "botls":     62 6F 74 6C 73
+</pre>
+</div>
+<figcaption><a href="#figure-5" class="selfRef">Figure 5</a>:
+<a href="#name-alpn-extension-in-encrypted" class="selfRef">ALPN Extension in EncryptedExtensions</a>
+          </figcaption></figure>
+</div>
+<p id="section-4.5-6">If the responding BGP peer does not recognize "botls", it <span class="bcp14">MUST</span> send a
+fatal TLS alert:<a href="#section-4.5-6" class="pilcrow">¶</a></p>
+<span id="name-fatal-alert-on-unrecognized"></span><div id="fig-tls-alert">
+<figure id="figure-6">
+          <div class="alignLeft art-text artwork" id="section-4.5-7.1">
+<pre>
+TLS Alert (fatal):
+  Level       : 02   (fatal)
+  Description : 78   (no_application_protocol = 120)
+</pre>
+</div>
+<figcaption><a href="#figure-6" class="selfRef">Figure 6</a>:
+<a href="#name-fatal-alert-on-unrecognized" class="selfRef">Fatal Alert on Unrecognized ALPN Identifier</a>
+          </figcaption></figure>
+</div>
+<p id="section-4.5-8">ALPN provides an early, explicit signal that the remote endpoint is not
+a BGP-over-TLS endpoint, which is preferable to completing the
+handshake and failing later on a malformed OPEN message.<a href="#section-4.5-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="connection-and-session-management">
+<section id="section-5">
+      <h2 id="name-connection-and-session-mana">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-connection-and-session-mana" class="section-name selfRef">Connection and Session Management</a>
+      </h2>
+<p id="section-5-1">Since BGP operates as a peer-to-peer protocol rather than a strict
+client/server protocol, either peer <span class="bcp14">MAY</span> initiate the TCP connection.
+The peer that sends the TLS ClientHello is designated the active peer
+and acts as the TLS client; the peer that receives it is the passive
+peer and acts as the TLS server. Therefore, each BGP speaker
+implementing TLS <span class="bcp14">MUST</span> be capable of operating in both roles.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="connection-collision-detection">
+<section id="section-5.1">
+        <h3 id="name-connection-collision-detect">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-connection-collision-detect" class="section-name selfRef">Connection Collision Detection</a>
+        </h3>
+<p id="section-5.1-1">When both peers simultaneously initiate a TCP connection, two TCP
+connections may form. Section 6.8 of <span>[<a href="#RFC4271" class="cite xref">RFC4271</a>]</span> resolves this as
+follows:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.1-2.1">
+            <p id="section-5.1-2.1.1">The peer with the higher BGP Identifier (Router-ID) retains its
+outgoing connection.<a href="#section-5.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.1-2.2">
+            <p id="section-5.1-2.2.1">The peer with the lower BGP Identifier drops its outgoing connection
+and uses the incoming connection.<a href="#section-5.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-5.1-3">If a connection collision is detected in the OpenSent or OpenConfirm
+state, the procedures defined in Section 6.8 of <span>[<a href="#RFC4271" class="cite xref">RFC4271</a>]</span> apply. The
+BGP speaker detecting the collision <span class="bcp14">SHALL</span> send a NOTIFICATION message
+with the Cease Error Code, terminate the corresponding TCP connection,
+and transition the FSM to the Idle state.<a href="#section-5.1-3" class="pilcrow">¶</a></p>
+<p id="section-5.1-4">Since the BGP Identifier is not known until the BGP OPEN message is
+received, both competing TCP/TLS sessions may complete full TLS
+establishment prior to collision resolution. Once the BGP Identifier
+comparison is performed, the speaker determined to have the
+lower-precedence connection, as defined by <span>[<a href="#RFC4271" class="cite xref">RFC4271</a>]</span>, <span class="bcp14">MUST</span> terminate
+the corresponding TCP/TLS connection.<a href="#section-5.1-4" class="pilcrow">¶</a></p>
+<p id="section-5.1-5">As a result, the use of TLS does not modify the collision resolution
+algorithm itself but may increase the connection establishment cost and
+delay associated with collision handling, since one fully established
+TCP/TLS session may subsequently be discarded.<a href="#section-5.1-5" class="pilcrow">¶</a></p>
+<span id="name-teardown-sequence-on-the-lo"></span><div id="fig-collision">
+<figure id="figure-7">
+          <div class="alignLeft art-text artwork" id="section-5.1-6.1">
+<pre>
+Peer A (lower Router-ID - loses)         Peer B (higher Router-ID - wins)
+  |                                         |
+  | &lt;- both TCP+TLS connections up &lt;-       |
+  | &lt;- both BGP OPENs exchanged    &lt;-       |
+  |                                         |
+  |  ** Collision: Peer A drops its         |
+  |     outgoing connection **              |
+  |                                         |
+  |--- BGP NOTIFICATION (Cease) -----------&gt;|  (over outgoing conn, encrypted)
+  |--- TLS close_notify -------------------&gt;|
+  |--- TCP FIN ----------------------------&gt;|
+  |                                         |
+  |&lt;===== Established on Peer B's conn ====&gt;|
+</pre>
+</div>
+<figcaption><a href="#figure-7" class="selfRef">Figure 7</a>:
+<a href="#name-teardown-sequence-on-the-lo" class="selfRef">Teardown Sequence on the Losing Connection</a>
+          </figcaption></figure>
+</div>
+</section>
+</div>
+<div id="tls-session-continuity-and-certificate-expiry-handling">
+<section id="section-5.2">
+        <h3 id="name-tls-session-continuity-and-">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-tls-session-continuity-and-" class="section-name selfRef">TLS Session Continuity and Certificate Expiry Handling</a>
+        </h3>
+<p id="section-5.2-1">If a new TCP/TLS connection is established, full TLS certificate
+validation procedures <span class="bcp14">MUST</span> be performed during the new TLS handshake.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.2-2">Certificate validity and peer authentication are performed during TLS
+session establishment. Expiration or revocation of a certificate after
+successful establishment of an active TCP/TLS-protected BGP session
+<span class="bcp14">SHOULD NOT</span>, by itself, trigger termination of the existing session.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
+<p id="section-5.2-3">Implementations are not required to perform periodic TLS
+re-authentication or certificate revalidation for active BGP sessions.
+Existing TLS sessions <span class="bcp14">MAY</span> continue operating until normal BGP or
+transport-layer termination occurs.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="operational-considerations">
+<section id="section-6">
+      <h2 id="name-operational-considerations">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-operational-considerations" class="section-name selfRef">Operational Considerations</a>
+      </h2>
+<p id="section-6-1">An implementation <span class="bcp14">MAY</span> support locally configurable transport security
+policy modes for BGP over TCP-AO and TLS deployments.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<p id="section-6-2">The following operational modes are <span class="bcp14">RECOMMENDED</span>:<a href="#section-6-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-6-3">
+        <dt id="section-6-3.1">tls-required:</dt>
+        <dd style="margin-left: 1.5em" id="section-6-3.2">
+          <p id="section-6-3.2.1">TLS is mandatory. Session establishment <span class="bcp14">MUST</span> fail if TLS negotiation
+or peer validation fails.<a href="#section-6-3.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-6-3.3">tls-preferred:</dt>
+        <dd style="margin-left: 1.5em" id="section-6-3.4">
+          <p id="section-6-3.4.1">TLS establishment <span class="bcp14">SHOULD</span> be attempted. If TLS negotiation or
+validation fails, the implementation <span class="bcp14">MAY</span> continue operation using
+TCP-AO-protected BGP transport based on local policy.<a href="#section-6-3.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-6-3.5">ao-only:</dt>
+        <dd style="margin-left: 1.5em" id="section-6-3.6">
+          <p id="section-6-3.6.1">The BGP session operates using TCP-AO-protected transport without TLS
+establishment.<a href="#section-6-3.6.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-6-4">These modes allow operators to deploy BGP over TLS incrementally while
+preserving interoperability with existing TCP-AO-protected deployments.<a href="#section-6-4" class="pilcrow">¶</a></p>
+<p id="section-6-5">Implementations supporting the "tls-preferred" mode <span class="bcp14">SHOULD</span> provide
+configurable timeout behavior for TLS establishment prior to fallback
+to TCP-AO-protected BGP transport.<a href="#section-6-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-considerations">
-<section id="section-4">
+<section id="section-7">
       <h2 id="name-security-considerations">
-<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
-<p id="section-4-1">This document improves the security of BGP sessions since the information exchanged over the
-session is now protected by using TLS.<a href="#section-4-1" class="pilcrow">¶</a></p>
-<p id="section-4-2">If TLS encounters a payload injection attack, it will generate an alert that immediately
-closes the TLS session. The BGP router <span class="bcp14">SHOULD</span> then attempt to reestablish the session.
-However, this will cause traffic to be interrupted during the connection re-establishement.<a href="#section-4-2" class="pilcrow">¶</a></p>
-<p id="section-4-3">If both BGP peer supports TCP-AO, the TLS stack is protected against payload injection and
-this attack can be avoided. When enabled, TCP-AO counters TCP injection
-attacks listed in <span>[<a href="#RFC5082" class="cite xref">RFC5082</a>]</span>.<a href="#section-4-3" class="pilcrow">¶</a></p>
-<p id="section-4-4">Furthermore, if the BGP router supports TCP-AO, we recommend an opportunistic
-TCP-AO approach as suggested in <span>[<a href="#I-D.draft-piraux-tcp-ao-tls" class="cite xref">I-D.draft-piraux-tcp-ao-tls</a>]</span>. The
-router will attempt to connect using TCP-AO with a default key. When the TLS
-handshake is finished, the routers will derive a new TCP-AO key using the TLS key.<a href="#section-4-4" class="pilcrow">¶</a></p>
-<p id="section-4-5">TCP-MD5 <span>[<a href="#RFC2385" class="cite xref">RFC2385</a>]</span> <span class="bcp14">MAY</span> be used to protect the TLS session if TCP-AO is not available on the
-BGP router.<a href="#section-4-5" class="pilcrow">¶</a></p>
+<p id="section-7-1">This document improves the security of BGP sessions, as the information
+exchanged over the session is protected using TLS. This document
+mandates the use of TCP-AO, which protects the TLS stack against
+payload injection attacks.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-2">It is <span class="bcp14">RECOMMENDED</span> that an opportunistic TCP-AO approach be used, as
+described in <span>[<a href="#I-D.piraux-tcp-ao-tls" class="cite xref">I-D.piraux-tcp-ao-tls</a>]</span>. A router attempts to connect
+using TCP-AO with a default key; once the TLS handshake completes, it
+derives a new TCP-AO key from the TLS key.<a href="#section-7-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="iana-considerations">
-<section id="section-5">
+<section id="section-8">
       <h2 id="name-iana-considerations">
-<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-5-1">IANA is requested to assign a TCP port (TBD1) from the "Service Name and Transport
-Protocol Port Number Registry" as follows:<a href="#section-5-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-5-2.1">
-          <p id="section-5-2.1.1">Service Name: botls<a href="#section-5-2.1.1" class="pilcrow">¶</a></p>
+<div id="registration-of-the-botls-alpn-identification-string">
+<section id="section-8.1">
+        <h3 id="name-registration-of-the-botls-a">
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-registration-of-the-botls-a" class="section-name selfRef">Registration of the BOTLS ALPN Identification String</a>
+        </h3>
+<p id="section-8.1-1">This document requests registration of a new entry in the "TLS
+Application-Layer Protocol Negotiation (ALPN) Protocol IDs" registry.
+The "botls" string identifies BGP over TLS:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<span id="name-botls-alpn-registration"></span><div id="fig-botls-alpn">
+<figure id="figure-8">
+          <div class="alignLeft art-text artwork" id="section-8.1-2.1">
+<pre>
+Protocol                : BOTLS (BGP over TLS)
+Identification Sequence : 0x62 0x6F 0x74 0x6C 0x73 ("botls")
+Reference               : This document
+</pre>
+</div>
+<figcaption><a href="#figure-8" class="selfRef">Figure 8</a>:
+<a href="#name-botls-alpn-registration" class="selfRef">BOTLS ALPN Registration</a>
+          </figcaption></figure>
+</div>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-8.1-3.1">
+            <p id="section-8.1-3.1.1"><strong>Editor's Note:</strong> Earlier revisions of this draft requested
+allocation of a dedicated TCP port (TBD1) for "botls" from the
+"Service Name and Transport Protocol Port Number Registry". That
+request has been WITHDRAWN in favor of reusing TCP port 179 with the
+Implicit TLS model described in this document. Accordingly, no new
+transport port is requested.<a href="#section-8.1-3.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-5-2.2">
-          <p id="section-5-2.2.1">Port Number: TBD1<a href="#section-5-2.2.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-5-2.3">
-          <p id="section-5-2.3.1">Transport Protocol: TCP<a href="#section-5-2.3.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-5-2.4">
-          <p id="section-5-2.4.1">Description: BGP over TLS/TCP<a href="#section-5-2.4.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-5-2.5">
-          <p id="section-5-2.5.1">Assignee: IETF<a href="#section-5-2.5.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-5-2.6">
-          <p id="section-5-2.6.1">Contact: IDR WG<a href="#section-5-2.6.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-5-2.7">
-          <p id="section-5-2.7.1">Registration Data: TBD<a href="#section-5-2.7.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-5-2.8">
-          <p id="section-5-2.8.1">Reference: this document<a href="#section-5-2.8.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-5-2.9">
-          <p id="section-5-2.9.1">Unauthorized Use Reported: idr@ietf.org<a href="#section-5-2.9.1" class="pilcrow">¶</a></p>
-</li>
-      </ul>
-<p id="section-5-3">It is suggested to use the same port as the one selected for BGP over QUIC
-<span>[<a href="#I-D.draft-retana-idr-bgp-quic" class="cite xref">I-D.draft-retana-idr-bgp-quic</a>]</span>.<a href="#section-5-3" class="pilcrow">¶</a></p>
+        </ul>
+</section>
+</div>
 </section>
 </div>
 <div id="acknowledgments">
-<section id="section-6">
+<section id="section-9">
       <h2 id="name-acknowledgments">
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<p id="section-6-1">The authors thank
-Dimitri Safonov for the TCP-AO implementation in Linux.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<p id="section-9-1">The authors thank Dmitry Safonov for the TCP-AO implementation in Linux.<a href="#section-9-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="contributors">
+<section id="section-10">
+      <h2 id="name-contributors">
+<a href="#name-contributors" class="section-name selfRef">Contributors</a>
+      </h2>
+<p id="section-10-1">Serge Krier
+   Cisco Systems
+   De Kleetlaan 6a
+   1831 Diegem
+   Belgium
+   Email: sekrier@cisco.com<a href="#section-10-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="change-log">
-<section id="section-7">
+<section id="section-11">
       <h2 id="name-change-log">
 <a href="#name-change-log" class="section-name selfRef">Change log</a>
     </h2>
 </section>
 </div>
 <div id="sec-combined-references">
-<section id="section-8">
+<section id="section-12">
       <h2 id="name-references">
 <a href="#name-references" class="section-name selfRef">References</a>
       </h2>
 <div id="sec-normative-references">
-<section id="section-8.1">
+<section id="section-12.1">
         <h3 id="name-normative-references">
 <a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
-<dt id="I-D.draft-piraux-tcp-ao-tls">[I-D.draft-piraux-tcp-ao-tls]</dt>
+<dt id="I-D.hbq-bgp-tls-auth">[I-D.hbq-bgp-tls-auth]</dt>
         <dd>
-<span class="refAuthor">Piraux, M.</span>, <span class="refAuthor">Bonaventure, O.</span>, and <span class="refAuthor">T. Wirtgen</span>, <span class="refTitle">"Opportunistic TCP-AO with TLS"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-piraux-tcp-ao-tls-02</span>, <time datetime="2024-10-21" class="refDate">21 October 2024</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-piraux-tcp-ao-tls-02">https://datatracker.ietf.org/doc/html/draft-piraux-tcp-ao-tls-02</a>&gt;</span>. </dd>
+<span class="refAuthor">Haas, J.</span>, <span class="refAuthor">Beck, B.</span>, and <span class="refAuthor">Y. Qu</span>, <span class="refTitle">"TLS Authentication for BGP"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-hbq-bgp-tls-auth-00</span>, <time datetime="2026-03-01" class="refDate">1 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-hbq-bgp-tls-auth-00">https://datatracker.ietf.org/doc/html/draft-hbq-bgp-tls-auth-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.piraux-tcp-ao-tls">[I-D.piraux-tcp-ao-tls]</dt>
+        <dd>
+<span class="refAuthor">Piraux, M.</span>, <span class="refAuthor">Bonaventure, O.</span>, and <span class="refAuthor">T. Wirtgen</span>, <span class="refTitle">"Opportunistic TCP-AO with TLS"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-piraux-tcp-ao-tls-03</span>, <time datetime="2025-07-07" class="refDate">7 July 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-piraux-tcp-ao-tls-03">https://datatracker.ietf.org/doc/html/draft-piraux-tcp-ao-tls-03</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC2119">[RFC2119]</dt>
         <dd>
 <span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC2385">[RFC2385]</dt>
-        <dd>
-<span class="refAuthor">Heffernan, A.</span>, <span class="refTitle">"Protection of BGP Sessions via the TCP MD5 Signature Option"</span>, <span class="seriesInfo">RFC 2385</span>, <span class="seriesInfo">DOI 10.17487/RFC2385</span>, <time datetime="1998-08" class="refDate">August 1998</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2385">https://www.rfc-editor.org/rfc/rfc2385</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="RFC4271">[RFC4271]</dt>
         <dd>
 <span class="refAuthor">Rekhter, Y., Ed.</span>, <span class="refAuthor">Li, T., Ed.</span>, and <span class="refAuthor">S. Hares, Ed.</span>, <span class="refTitle">"A Border Gateway Protocol 4 (BGP-4)"</span>, <span class="seriesInfo">RFC 4271</span>, <span class="seriesInfo">DOI 10.17487/RFC4271</span>, <time datetime="2006-01" class="refDate">January 2006</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc4271">https://www.rfc-editor.org/rfc/rfc4271</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC4272">[RFC4272]</dt>
-        <dd>
-<span class="refAuthor">Murphy, S.</span>, <span class="refTitle">"BGP Security Vulnerabilities Analysis"</span>, <span class="seriesInfo">RFC 4272</span>, <span class="seriesInfo">DOI 10.17487/RFC4272</span>, <time datetime="2006-01" class="refDate">January 2006</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc4272">https://www.rfc-editor.org/rfc/rfc4272</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC5925">[RFC5925]</dt>
         <dd>
@@ -1370,29 +1822,33 @@ Dimitri Safonov for the TCP-AO implementation in Linux.<a href="#section-6-1" cl
 <span class="refAuthor">Friedl, S.</span>, <span class="refAuthor">Popov, A.</span>, <span class="refAuthor">Langley, A.</span>, and <span class="refAuthor">E. Stephan</span>, <span class="refTitle">"Transport Layer Security (TLS) Application-Layer Protocol Negotiation Extension"</span>, <span class="seriesInfo">RFC 7301</span>, <span class="seriesInfo">DOI 10.17487/RFC7301</span>, <time datetime="2014-07" class="refDate">July 2014</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7301">https://www.rfc-editor.org/rfc/rfc7301</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refTitle">"*** BROKEN REFERENCE ***"</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8446">[RFC8446]</dt>
       <dd>
-<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<span class="refTitle">"*** BROKEN REFERENCE ***"</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
 </div>
 <div id="sec-informative-references">
-<section id="section-8.2">
+<section id="section-12.2">
         <h3 id="name-informative-references">
 <a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
-<dt id="I-D.draft-retana-idr-bgp-quic">[I-D.draft-retana-idr-bgp-quic]</dt>
+<dt id="I-D.retana-idr-bgp-quic">[I-D.retana-idr-bgp-quic]</dt>
         <dd>
-<span class="refAuthor">Retana, A.</span>, <span class="refAuthor">Qu, Y.</span>, <span class="refAuthor">Haas, J.</span>, <span class="refAuthor">Chen, S.</span>, and <span class="refAuthor">J. Tantsura</span>, <span class="refTitle">"BGP over QUIC"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-retana-idr-bgp-quic-07</span>, <time datetime="2025-07-06" class="refDate">6 July 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-retana-idr-bgp-quic-07">https://datatracker.ietf.org/doc/html/draft-retana-idr-bgp-quic-07</a>&gt;</span>. </dd>
+<span class="refAuthor">Retana, A.</span>, <span class="refAuthor">Qu, Y.</span>, <span class="refAuthor">Haas, J.</span>, <span class="refAuthor">Chen, S.</span>, and <span class="refAuthor">J. Tantsura</span>, <span class="refTitle">"BGP over QUIC"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-retana-idr-bgp-quic-09</span>, <time datetime="2026-06-24" class="refDate">24 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-retana-idr-bgp-quic-09">https://datatracker.ietf.org/doc/html/draft-retana-idr-bgp-quic-09</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC4272">[RFC4272]</dt>
+        <dd>
+<span class="refAuthor">Murphy, S.</span>, <span class="refTitle">"BGP Security Vulnerabilities Analysis"</span>, <span class="seriesInfo">RFC 4272</span>, <span class="seriesInfo">DOI 10.17487/RFC4272</span>, <time datetime="2006-01" class="refDate">January 2006</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc4272">https://www.rfc-editor.org/rfc/rfc4272</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC5082">[RFC5082]</dt>
         <dd>
 <span class="refAuthor">Gill, V.</span>, <span class="refAuthor">Heasley, J.</span>, <span class="refAuthor">Meyer, D.</span>, <span class="refAuthor">Savola, P., Ed.</span>, and <span class="refAuthor">C. Pignataro</span>, <span class="refTitle">"The Generalized TTL Security Mechanism (GTSM)"</span>, <span class="seriesInfo">RFC 5082</span>, <span class="seriesInfo">DOI 10.17487/RFC5082</span>, <time datetime="2007-10" class="refDate">October 2007</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5082">https://www.rfc-editor.org/rfc/rfc5082</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC8446">[RFC8446]</dt>
-        <dd>
-<span class="refAuthor">Rescorla, E.</span>, <span class="refTitle">"The Transport Layer Security (TLS) Protocol Version 1.3"</span>, <span class="seriesInfo">RFC 8446</span>, <span class="seriesInfo">DOI 10.17487/RFC8446</span>, <time datetime="2018-08" class="refDate">August 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8446">https://www.rfc-editor.org/rfc/rfc8446</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9000">[RFC9000]</dt>
       <dd>
@@ -1410,10 +1866,10 @@ Dimitri Safonov for the TCP-AO implementation in Linux.<a href="#section-6-1" cl
       </h2>
 <address class="vcard">
         <div dir="auto" class="left"><span class="fn nameRole">Thomas Wirtgen</span></div>
-<div dir="auto" class="left"><span class="org">UCLouvain &amp; WELRI</span></div>
+<div dir="auto" class="left"><span class="org">Unaffiliated</span></div>
 <div class="email">
 <span>Email:</span>
-<a href="mailto:thomas.wirtgen@uclouvain.be" class="email">thomas.wirtgen@uclouvain.be</a>
+<a href="mailto:thomas.wirtgen@gmail.com" class="email">thomas.wirtgen@gmail.com</a>
 </div>
 </address>
 <address class="vcard">
@@ -1422,6 +1878,22 @@ Dimitri Safonov for the TCP-AO implementation in Linux.<a href="#section-6-1" cl
 <div class="email">
 <span>Email:</span>
 <a href="mailto:olivier.bonaventure@uclouvain.be" class="email">olivier.bonaventure@uclouvain.be</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">AravindBabu MahendraBabu</span></div>
+<div dir="auto" class="left"><span class="org">Cisco Systems</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:aramahen@cisco.com" class="email">aramahen@cisco.com</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Chennakesava Reddy Gaddam</span></div>
+<div dir="auto" class="left"><span class="org">Cisco Systems</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:chgaddam@cisco.com" class="email">chgaddam@cisco.com</a>
 </div>
 </address>
 </section>
