@@ -146,10 +146,6 @@ defined in {{RFC4271}}, and the protocol operates in the same manner as
 a classic BGP-over-TCP session, except that the session is encrypted
 and authenticated by the TLS layer.
 
-{{I-D.hbq-bgp-tls-auth}} discusses authentication considerations for
-running BGP over TLS protocols and defines a PKI framework to provide
-for authenticating BGP peering sessions.
-
 # Transport
 
 ## Overview
@@ -158,14 +154,23 @@ This document specifies the use of TCP port 179 rather than a dedicated
 port. The use of a dedicated port is purely an operational and
 deployment choice.
 
+## TLS Authentication for BGP
+
+{{I-D.hbq-bgp-tls-auth}} discusses authentication considerations for
+running BGP over TLS protocols and defines a PKI framework to provide
+for authenticating BGP peering sessions.
+
 ## Initiating the TLS Procedure
 
-This document specifies the Implicit TLS model for initiating TLS. Both
-peers are pre-configured to use TLS on port 179. The TCP-AO connection
-is established normally, and the first application bytes transmitted are
-a TLS ClientHello. Only after TLS is successfully established are BGP
-exchanges conducted over the encrypted channel. No plaintext BGP bytes
-appear on the wire, and the use of TLS is assumed by configuration.
+This document specifies the Implicit TLS model for BGP session
+establishment. Both peers MUST be pre-configured to enable TLS
+on port 179. After the TCP-AO connection is established, the
+active peer (TLS client) MUST transmit a TLS ClientHello as its
+first application-layer bytes; the passive peer (TLS server)
+MUST expect a TLS ClientHello before sending any data. BGP
+exchanges MUST NOT commence until the TLS handshake has
+completed successfully. No plaintext BGP bytes appear on the
+wire; use of TLS is assumed entirely by configuration.
 
 ~~~
 Peer A (active = TLS client)         Peer B (passive = TLS server, :179)
@@ -201,15 +206,15 @@ version.
 
 ## Connection Establishment Failures
 
-A non-TLS peer interprets the TLS ClientHello bytes as a malformed BGP
-message and resets the connection; this allows local policy-based
-controls to fall back to a non-TLS, TCP-AO-protected exchange.
-
-BGP operates only over a TLS-protected TCP connection and never over
-plaintext TCP. Any failure within the TLS layer is abstracted from the
-BGP Finite State Machine (FSM), which observes only a generic
-connection failure event. TLS error alerts are defined in Section 6.2
-of {{RFC8446}}.
+An active BGP peer MUST attempt over a TLS-protected TCP-AO 
+connection and never over plaintext TCP. Any failure within the TLS 
+layer is abstracted from the BGP Finite State Machine (FSM), which 
+observes only a generic connection failure event. TLS error alerts 
+are defined in Section 6.2 of {{RFC8446}}. The active BGP peer should 
+continue attempting the TLS establishment. After the configured number 
+of failed attempts, it may proceed based on the local policy decisions 
+described in [Operational Considerations](#operational-considerations),
+using TCP-AO authentication only. 
 
 ~~~
 TCP connected (TCP-AO authenticated)
@@ -222,14 +227,15 @@ TCP connected (TCP-AO authenticated)
 
 ### TLS ClientHello received by a non-TLS peer
 
-A non-TLS peer reads the TLS ClientHello (0x16 0x03 0x01 ...) as a BGP
-message header. As per Section 6.1 of {{RFC4271}}, the 16-octet Marker
-MUST be all 0xFF; because the record begins with 0x16, the check fails
-immediately. As per Section 4.5 of {{RFC4271}}, the BGP connection is
-closed immediately after the NOTIFICATION message is sent.
+A non-TLS peer reads the TLS ClientHello (0x16 0x03 0x01 ...) 
+as a BGP message header. As per Section 6.1 of {{RFC4271}}, the 
+16-octet Marker MUST be all 0xFF; because the record begins with 0x16, 
+the check fails immediately. As per Section 4.5 of {{RFC4271}}, the 
+BGP connection is closed immediately after the NOTIFICATION message 
+is sent.
 
 ~~~
-Peer A (TLS client)                   Peer B (plain BGP, non-TLS)
+Peer A (active = TLS client)          Peer B (plain BGP, non-TLS)
   |-- TCP handshake ------------------->|  <- TCP up
   |-- TLS ClientHello ----------------->|
   |   Content Type: 16                  |  Marker byte 0x16 != 0xFF
@@ -256,11 +262,11 @@ Idle state.
 
 Application-Layer Protocol Negotiation {{RFC7301}} allows a TLS client
 to declare the application protocol it intends to use within the TLS
-tunnel. For BGP over TLS, the ALPN identifier is the octet sequence
+session. For BGP over TLS, the ALPN identifier is the octet sequence
 0x62 0x6F 0x74 0x6C 0x73 ("botls"), defined by this document and
 registered as specified in {{iana-considerations}}.
 
-A BGP peer initiating the TLS exchange MUST include the following
+An active BGP peer initiating the TLS exchange MUST include the following
 extension in its ClientHello:
 
 ~~~
@@ -273,7 +279,7 @@ TLS ClientHello extensions:
 ~~~
 {: #fig-alpn-clienthello title="ALPN Extension in ClientHello"}
 
-The responding BGP peer MUST indicate the selected protocol in the
+The passive BGP peer MUST indicate the selected protocol in the
 EncryptedExtensions message:
 
 ~~~
@@ -302,9 +308,11 @@ handshake and failing later on a malformed OPEN message.
 # Connection and Session Management
 
 Since BGP operates as a peer-to-peer protocol rather than a strict
-client/server protocol, either peer MAY initiate the TCP connection
-establishment. Therefore, each BGP speaker implementing TLS MUST be
-capable of operating in both the TLS client and TLS server roles.
+client/server protocol, either peer MAY initiate the TCP connection.
+The peer that sends the TLS ClientHello is designated the active peer
+and acts as the TLS client; the peer that receives it is the passive
+peer and acts as the TLS server. Therefore, each BGP speaker
+implementing TLS MUST be capable of operating in both roles.
 
 ## Connection Collision Detection
 
@@ -355,6 +363,9 @@ Peer A (lower Router-ID - loses)         Peer B (higher Router-ID - wins)
 
 ## TLS Session Continuity and Certificate Expiry Handling
 
+If a new TCP/TLS connection is established, full TLS certificate
+validation procedures MUST be performed during the new TLS handshake.
+
 Certificate validity and peer authentication are performed during TLS
 session establishment. Expiration or revocation of a certificate after
 successful establishment of an active TCP/TLS-protected BGP session
@@ -364,9 +375,6 @@ Implementations are not required to perform periodic TLS
 re-authentication or certificate revalidation for active BGP sessions.
 Existing TLS sessions MAY continue operating until normal BGP or
 transport-layer termination occurs.
-
-If a new TCP/TLS connection is established, full TLS certificate
-validation procedures MUST be performed during the new TLS handshake.
 
 # Operational Considerations
 
@@ -406,11 +414,6 @@ It is RECOMMENDED that an opportunistic TCP-AO approach be used, as
 described in {{I-D.piraux-tcp-ao-tls}}. A router attempts to connect
 using TCP-AO with a default key; once the TLS handshake completes, the
 routers derive a new TCP-AO key from the TLS key.
-
-> **Open Issue:** The derivation of TCP-AO keys from the TLS handshake,
-> as referenced from {{I-D.piraux-tcp-ao-tls}}, remains to be fully
-> specified, including the interaction between MKT rollover and TLS key
-> updates.
 
 # IANA Considerations
 
