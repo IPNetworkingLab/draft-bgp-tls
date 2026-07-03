@@ -26,7 +26,7 @@ venue:
 author:
  -
     name: Thomas Wirtgen
-    organization: Aerospacelab 
+    organization: Unaffiliated 
     email: thomas.wirtgen@gmail.com
  -
     name: Olivier Bonaventure
