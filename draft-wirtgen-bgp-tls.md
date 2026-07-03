@@ -26,7 +26,7 @@ venue:
 author:
  -
     name: Thomas Wirtgen
-    organization: Unaffiliated 
+    organization: Unaffiliated
     email: thomas.wirtgen@gmail.com
  -
     name: Olivier Bonaventure
@@ -66,8 +66,8 @@ transport-layer integrity protection against spoofing and reset attacks,
 it does not provide confidentiality, cryptographic peer identity, or
 scalable key management. This document specifies a method for
 establishing a secure BGP session by running BGP over a TLS 1.3
-session. The underlying TCP transport MUST be protected using TCP-AO. 
-An "Implicit TLS" model on TCP port 179 is specified as the preferred 
+session. The underlying TCP transport MUST be protected using TCP-AO.
+An "Implicit TLS" model on TCP port 179 is specified as the preferred
 mechanism.
 
 --- middle
@@ -77,7 +77,7 @@ mechanism.
 The Border Gateway Protocol (BGP) {{RFC4271}} relies on TCP to
 establish BGP sessions between routers. A recent draft
 {{I-D.retana-idr-bgp-quic}} has proposed replacing TCP with the QUIC
-protocol {{RFC9000}}. QUIC provides several features compared to TCP,
+protocol {{RFC9000}}. QUIC provides several advantages over TCP,
 including security, support for multiple streams, and datagram
 transport.
 
@@ -95,16 +95,16 @@ TCP-AO SHOULD be used to protect BGP transport traffic.
 TLS {{RFC8446}} introduces authenticated peer identities,
 confidentiality of routing messages, and cryptographic agility aligned
 with modern compliance requirements. The widespread deployment of TLS
-creates an interest in using Mutual TLS (mTLS) to secure BGP sessions. 
-TLS complements TCP-AO: TCP-AO authenticates the entire TCP segment, 
-covering both the TCP header and payload, to provide integrity and 
-peer authentication at the transport layer. mTLS additionally encrypts 
+creates an interest in using Mutual TLS (mTLS) to secure BGP sessions.
+TLS complements TCP-AO: TCP-AO authenticates the entire TCP segment,
+covering both the TCP header and payload, to provide integrity and
+peer authentication at the transport layer. mTLS additionally encrypts
 and authenticates the application data (the TCP payload), and
 authenticates both BGP endpoints.
 
 This document describes how to establish a secure BGP session using
 mTLS. The underlying TCP transport MUST be protected using TCP-AO
-{{RFC5925}} with pre-shared key authentication or deriving TCP-AO 
+{{RFC5925}} with pre-shared key authentication or deriving TCP-AO
 keys from the TLS handshake as described in {{I-D.piraux-tcp-ao-tls}}.
 
 # Conventions and Definitions
@@ -118,10 +118,10 @@ placed starting from the high-order bits of each byte.
 
 A BGP over TLS/TCP-AO session is established in two phases:
 
-1. A TCP connection is established on port 179. The integrity of the 
+1. A TCP connection is established on port 179. The integrity of the
 TCP segments is protected by using TCP-AO.
 
-2. A TLS session is established over THIS TCP connection.
+2. A TLS session is established over this TCP connection.
 
 With mandatory TCP-AO as the underlying transport protection, TCP port
 179 continues to provide authenticated transport establishment. This
@@ -206,15 +206,15 @@ version.
 
 ## Connection Establishment Failures
 
-An active BGP peer MUST attempt over a TLS-protected TCP-AO 
-connection and never over plaintext TCP. Any failure within the TLS 
-layer is abstracted from the BGP Finite State Machine (FSM), which 
-observes only a generic connection failure event. TLS error alerts 
-are defined in Section 6.2 of {{RFC8446}}. The active BGP peer should 
-continue attempting the TLS establishment. After the configured number 
-of failed attempts, it may proceed based on the local policy decisions 
+An active BGP peer MUST connect over a TLS-protected TCP-AO
+connection and never over plaintext TCP. Any failure within the TLS
+layer is abstracted from the BGP Finite State Machine (FSM), which
+observes only a generic connection failure event. TLS error alerts
+are defined in Section 6.2 of {{RFC8446}}. The active BGP peer should
+continue attempting the TLS establishment. After the configured number
+of failed attempts, it may proceed based on the local policy decisions
 described in [Operational Considerations](#operational-considerations),
-using TCP-AO authentication only. 
+using TCP-AO authentication only.
 
 ~~~
 TCP connected (TCP-AO authenticated)
@@ -227,11 +227,11 @@ TCP connected (TCP-AO authenticated)
 
 ### TLS ClientHello received by a non-TLS peer
 
-A non-TLS peer reads the TLS ClientHello (0x16 0x03 0x01 ...) 
-as a BGP message header. As per Section 6.1 of {{RFC4271}}, the 
-16-octet Marker MUST be all 0xFF; because the record begins with 0x16, 
-the check fails immediately. As per Section 4.5 of {{RFC4271}}, the 
-BGP connection is closed immediately after the NOTIFICATION message 
+A non-TLS peer reads the TLS ClientHello (0x16 0x03 0x01 ...)
+as a BGP message header. As per Section 6.1 of {{RFC4271}}, the
+16-octet Marker MUST be all 0xFF; because the record begins with 0x16,
+the check fails immediately. As per Section 4.5 of {{RFC4271}}, the
+BGP connection is closed immediately after the NOTIFICATION message
 is sent.
 
 ~~~
@@ -412,8 +412,8 @@ payload injection attacks.
 
 It is RECOMMENDED that an opportunistic TCP-AO approach be used, as
 described in {{I-D.piraux-tcp-ao-tls}}. A router attempts to connect
-using TCP-AO with a default key; once the TLS handshake completes, the
-routers derive a new TCP-AO key from the TLS key.
+using TCP-AO with a default key; once the TLS handshake completes, it
+derives a new TCP-AO key from the TLS key.
 
 # IANA Considerations
 
@@ -433,7 +433,7 @@ Reference               : This document
 > **Editor's Note:** Earlier revisions of this draft requested
 > allocation of a dedicated TCP port (TBD1) for "botls" from the
 > "Service Name and Transport Protocol Port Number Registry". That
-> request has been WITHDRAWN in favour of reusing TCP port 179 with the
+> request has been WITHDRAWN in favor of reusing TCP port 179 with the
 > Implicit TLS model described in this document. Accordingly, no new
 > transport port is requested.
 
