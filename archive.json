@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-07-02T02:35:02.595364+00:00",
+  "timestamp": "2026-07-05T02:24:04.565624+00:00",
   "repo": "IPNetworkingLab/draft-bgp-tls",
   "labels": [
     {
@@ -56,24 +56,26 @@
       "id": "PR_kwDOPIXBD87skXor",
       "title": "Update draft to revision 05",
       "url": "https://github.com/IPNetworkingLab/draft-bgp-tls/pull/1",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "AravindBabuM",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Update draft to revision 05.\r\nAdd Transport, Session Management, Operational sections; \r\nmandate TCP-AO; switch to Implicit TLS on port 179.",
       "createdAt": "2026-07-01T07:45:39Z",
-      "updatedAt": "2026-07-01T15:44:33Z",
+      "updatedAt": "2026-07-03T15:36:40Z",
       "baseRepository": "IPNetworkingLab/draft-bgp-tls",
       "baseRefName": "main",
       "baseRefOid": "de29e6103224e6a9b32e6530faa0342c6a7c2152",
       "headRepository": "AravindBabuM/draft-bgp-tls",
       "headRefName": "main",
-      "headRefOid": "29530724e8ba4feb6ecf3397002ac4aa2332e0a0",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "d1f3abdbcd23c75dd34116c58482c21a59bdb264",
+      "closedAt": "2026-07-03T15:36:40Z",
+      "mergedAt": "2026-07-03T15:36:40Z",
+      "mergedBy": "obonaventure",
+      "mergeCommit": {
+        "oid": "890cfcb2198823a7c784be530c1121c44de72a3d"
+      },
       "comments": [],
       "reviews": [
         {
@@ -331,6 +333,400 @@
               "body": "```suggestion\n-    \"botls\": 62 6F 74 6C 73\n+    list length: 00 06\n+    name length: 05\n+    \"botls\":     62 6F 74 6C 73\n```",
               "createdAt": "2026-07-01T15:44:32Z",
               "updatedAt": "2026-07-01T15:44:33Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEyMX2w",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-02T09:07:05Z",
+          "updatedAt": "2026-07-02T09:07:05Z",
+          "comments": [
+            {
+              "originalPosition": 6,
+              "body": "updated. ",
+              "createdAt": "2026-07-02T09:07:05Z",
+              "updatedAt": "2026-07-02T09:07:05Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEyM6tw",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-02T09:08:25Z",
+          "updatedAt": "2026-07-02T09:08:26Z",
+          "comments": [
+            {
+              "originalPosition": 19,
+              "body": "updated. ",
+              "createdAt": "2026-07-02T09:08:26Z",
+              "updatedAt": "2026-07-02T09:08:26Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABEztZzA",
+          "commit": {
+            "abbreviatedOid": "79bd9c6"
+          },
+          "author": "obonaventure",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-02T12:59:15Z",
+          "updatedAt": "2026-07-02T13:15:40Z",
+          "comments": [
+            {
+              "originalPosition": 274,
+              "body": "This subsection is ambiguous. We indicate that a non tls peer can fallback to tcp-ao and then BGP operates never over plaintext TCP.",
+              "createdAt": "2026-07-02T12:59:15Z",
+              "updatedAt": "2026-07-02T13:15:40Z"
+            },
+            {
+              "originalPosition": 247,
+              "body": "We probably need to define active and passive peer because this is different from current BGP. An active peer sends immediately a ClientHello. A passive peer waits for a ClientHello.",
+              "createdAt": "2026-07-02T13:02:31Z",
+              "updatedAt": "2026-07-02T13:15:40Z"
+            },
+            {
+              "originalPosition": 331,
+              "body": "I would use session instead of tunnel.",
+              "createdAt": "2026-07-02T13:04:11Z",
+              "updatedAt": "2026-07-02T13:15:40Z"
+            },
+            {
+              "originalPosition": 335,
+              "body": "Should we write an active BGP peer?",
+              "createdAt": "2026-07-02T13:04:43Z",
+              "updatedAt": "2026-07-02T13:15:40Z"
+            },
+            {
+              "originalPosition": 347,
+              "body": "Should we write passive BGP peer ?",
+              "createdAt": "2026-07-02T13:05:10Z",
+              "updatedAt": "2026-07-02T13:15:40Z"
+            },
+            {
+              "originalPosition": 376,
+              "body": "We should use the words active and passive in this section.",
+              "createdAt": "2026-07-02T13:05:58Z",
+              "updatedAt": "2026-07-02T13:15:40Z"
+            },
+            {
+              "originalPosition": 396,
+              "body": "It could be possible to add the BGP identifier in the ALPN, like botls-1.2.3.4 with the router id, but this would create a lot of complexity\n",
+              "createdAt": "2026-07-02T13:09:07Z",
+              "updatedAt": "2026-07-02T13:15:40Z"
+            },
+            {
+              "originalPosition": 427,
+              "body": "validation only during establishment ?",
+              "createdAt": "2026-07-02T13:10:00Z",
+              "updatedAt": "2026-07-02T13:15:40Z"
+            },
+            {
+              "originalPosition": 437,
+              "body": "I would start with this paragraph\n",
+              "createdAt": "2026-07-02T13:10:40Z",
+              "updatedAt": "2026-07-02T13:15:40Z"
+            },
+            {
+              "originalPosition": 495,
+              "body": "should be clarified in the updated draft\n",
+              "createdAt": "2026-07-02T13:14:05Z",
+              "updatedAt": "2026-07-02T13:15:40Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE0TWXA",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-02T14:06:29Z",
+          "updatedAt": "2026-07-02T14:06:30Z",
+          "comments": [
+            {
+              "originalPosition": 103,
+              "body": "modified the text. ",
+              "createdAt": "2026-07-02T14:06:29Z",
+              "updatedAt": "2026-07-02T14:06:30Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE0Y5Mw",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-02T14:16:28Z",
+          "updatedAt": "2026-07-02T14:16:28Z",
+          "comments": [
+            {
+              "originalPosition": 151,
+              "body": "Removed the text about pre-shared key and modified to SHOULD.  ",
+              "createdAt": "2026-07-02T14:16:28Z",
+              "updatedAt": "2026-07-02T14:16:28Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE0d4iw",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-02T14:25:15Z",
+          "updatedAt": "2026-07-02T14:25:15Z",
+          "comments": [
+            {
+              "originalPosition": 157,
+              "body": "edited the text. ",
+              "createdAt": "2026-07-02T14:25:15Z",
+              "updatedAt": "2026-07-02T14:25:15Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE0kwSQ",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-02T14:37:13Z",
+          "updatedAt": "2026-07-02T14:37:13Z",
+          "comments": [
+            {
+              "originalPosition": 158,
+              "body": "modified text. ",
+              "createdAt": "2026-07-02T14:37:13Z",
+              "updatedAt": "2026-07-02T14:37:13Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE0q0dw",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-02T14:46:53Z",
+          "updatedAt": "2026-07-02T14:46:53Z",
+          "comments": [
+            {
+              "originalPosition": 164,
+              "body": "rephrased.",
+              "createdAt": "2026-07-02T14:46:53Z",
+              "updatedAt": "2026-07-02T14:46:54Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE4rI1A",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-03T04:41:53Z",
+          "updatedAt": "2026-07-03T04:41:54Z",
+          "comments": [
+            {
+              "originalPosition": 215,
+              "body": "Line 126 covers mandatory TCP-AO in the same section. This para is just the continuation. ",
+              "createdAt": "2026-07-03T04:41:53Z",
+              "updatedAt": "2026-07-03T04:41:54Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE4tlPA",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-03T04:52:39Z",
+          "updatedAt": "2026-07-03T04:52:39Z",
+          "comments": [
+            {
+              "originalPosition": 225,
+              "body": "Moved to new sub-section. ",
+              "createdAt": "2026-07-03T04:52:39Z",
+              "updatedAt": "2026-07-03T04:52:39Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE71DQw",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-03T13:34:26Z",
+          "updatedAt": "2026-07-03T13:34:26Z",
+          "comments": [
+            {
+              "originalPosition": 274,
+              "body": "Modified text. ",
+              "createdAt": "2026-07-03T13:34:26Z",
+              "updatedAt": "2026-07-03T13:34:26Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE75C8Q",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-03T13:45:53Z",
+          "updatedAt": "2026-07-03T13:45:53Z",
+          "comments": [
+            {
+              "originalPosition": 247,
+              "body": "modified text. ",
+              "createdAt": "2026-07-03T13:45:53Z",
+              "updatedAt": "2026-07-03T13:45:53Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE778Ag",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-03T13:53:54Z",
+          "updatedAt": "2026-07-03T13:53:55Z",
+          "comments": [
+            {
+              "originalPosition": 376,
+              "body": "updated text. ",
+              "createdAt": "2026-07-03T13:53:54Z",
+              "updatedAt": "2026-07-03T13:53:55Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE78Wcw",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-03T13:55:03Z",
+          "updatedAt": "2026-07-03T13:55:03Z",
+          "comments": [
+            {
+              "originalPosition": 396,
+              "body": "I think we can enhance it after giving it a thought. May be, in the subsequent version of the draft. ",
+              "createdAt": "2026-07-03T13:55:03Z",
+              "updatedAt": "2026-07-03T13:55:03Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE79t4g",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-03T13:58:45Z",
+          "updatedAt": "2026-07-03T13:58:45Z",
+          "comments": [
+            {
+              "originalPosition": 437,
+              "body": "done. ",
+              "createdAt": "2026-07-03T13:58:45Z",
+              "updatedAt": "2026-07-03T13:58:46Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE799vQ",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-03T13:59:30Z",
+          "updatedAt": "2026-07-03T13:59:30Z",
+          "comments": [
+            {
+              "originalPosition": 427,
+              "body": "yes. only during session establishment. ",
+              "createdAt": "2026-07-03T13:59:30Z",
+              "updatedAt": "2026-07-03T13:59:30Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOPIXBD88AAAABE7-ZDg",
+          "commit": {
+            "abbreviatedOid": "2953072"
+          },
+          "author": "AravindBabuM",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-07-03T14:00:36Z",
+          "updatedAt": "2026-07-03T14:00:36Z",
+          "comments": [
+            {
+              "originalPosition": 495,
+              "body": "Removed the open issues. ",
+              "createdAt": "2026-07-03T14:00:36Z",
+              "updatedAt": "2026-07-03T14:00:36Z"
             }
           ]
         }
