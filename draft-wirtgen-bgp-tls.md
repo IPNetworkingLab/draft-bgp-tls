@@ -53,6 +53,7 @@ normative:
 
 informative:
   I-D.retana-idr-bgp-quic:
+  I-D.ietf-idr-bgp-model:
   RFC4272:
   RFC5082:
   RFC9000:
@@ -402,6 +403,27 @@ preserving interoperability with existing TCP-AO-protected deployments.
 Implementations supporting the "tls-preferred" mode SHOULD provide
 configurable timeout behavior for TLS establishment prior to fallback
 to TCP-AO-protected BGP transport.
+
+# YANG Module for BGP over TLS
+
+This document defines a YANG module for BGP transport sessions over TLS.
+It is an augmentation of the BGP base model {{I-D.ietf-idr-bgp-model}}.
+
+## BGP over TLS Model Tree
+
+module: ietf-bgp-tls
+
+  augment /rt:routing/rt:control-plane-protocols/rt:control-plane-protocol
+          /bgp:bgp/bgp:neighbors/bgp:neighbor/bgp:transport:
+    +--rw tls!
+       +---u tls-params
+
+## BGP over TLS YANG Module
+
+~~~~ yang
+{::include ietf-bgp-tls@2026-11-02.yang}
+~~~~
+{: sourcecode-markers="true" sourcecode-name="ietf-bgp-tls@2026-11-02.yang"}
 
 # Security Considerations
 
