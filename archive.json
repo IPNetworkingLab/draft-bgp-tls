@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-11-01T03:37:09.859000+00:00",
+  "timestamp": "2026-11-03T04:47:15.631840+00:00",
   "repo": "IPNetworkingLab/draft-bgp-tls",
   "labels": [
     {
@@ -731,6 +731,32 @@
           ]
         }
       ]
+    },
+    {
+      "number": 2,
+      "id": "PR_kwDOPIXBD88AAAABMWjE1A",
+      "title": "Add a simple YANG model to configure TLS parameters per neighbor.",
+      "url": "https://github.com/IPNetworkingLab/draft-bgp-tls/pull/2",
+      "state": "OPEN",
+      "author": "nrybowski",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "This model is implemented in https://github.com/holo-routing/holo/pull/161.",
+      "createdAt": "2026-11-02T16:43:07Z",
+      "updatedAt": "2026-11-02T17:06:23Z",
+      "baseRepository": "IPNetworkingLab/draft-bgp-tls",
+      "baseRefName": "main",
+      "baseRefOid": "7bfbdf7be0fddddb5f6b37419bfe60797479b407",
+      "headRepository": "nrybowski/draft-bgp-tls",
+      "headRefName": "yang-model",
+      "headRefOid": "92e4cc376c53cd25aa3b1dbb5f9ff5a2cb757088",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
